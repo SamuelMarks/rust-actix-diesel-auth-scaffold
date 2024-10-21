@@ -15,10 +15,13 @@ diesel::table! {
         #[max_length = 50]
         username -> Varchar,
         #[max_length = 50]
-        password_hash -> Nullable<Varchar>,
-        role -> Nullable<Text>,
+        password_hash -> Varchar,
+        role -> Text,
         created_at -> Timestamp,
     }
 }
 
-diesel::allow_tables_to_appear_in_same_query!(clients, users,);
+diesel::allow_tables_to_appear_in_same_query!(
+    clients,
+    users,
+);
