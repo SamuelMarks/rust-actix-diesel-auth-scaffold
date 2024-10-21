@@ -1,9 +1,9 @@
-use actix_web::{web, post};
+use actix_web::{post, web};
 use argon2::{Argon2, PasswordVerifier};
-use serde::Deserialize;
 use diesel::prelude::*;
 use diesel::r2d2::{self, ConnectionManager};
 use redis::Commands;
+use serde::Deserialize;
 use uuid::Uuid;
 
 use crate::errors::AuthError;
@@ -30,22 +30,36 @@ async fn token(
 
     if form.grant_type == "password" {
         if let (Some(username_s), Some(password)) = (&form.username, &form.password) {
-            use crate::schema::user::dsl::*;
+            use crate::schema::users::dsl::*;
 
             // Verify user credentials
-            let user: QueryResult<User> = user.filter(username.eq(username_s)).first(&mut conn);
+            let maybe_user: Option<User> = users
+                .find(username_s)
+                .select(User::as_select())
+                .first(&mut conn)
+                .optional()?;
 
-            match user {
-                Ok(user) => {
-                    if Argon2::default().verify_password(password.as_ref(), &user.password_hash).is_ok() {
+            match maybe_user {
+                Some(user) => {
+                    if Argon2::default()
+                        .verify_password(
+                            password.as_ref(),
+                            &argon2::PasswordHash::parse(
+                                user.password_hash.as_str(),
+                                argon2::password_hash::Encoding::default(),
+                            )?,
+                        )
+                        .is_ok()
+                    {
                         // Generate and return an access token
                         let access_token = Uuid::new_v4().to_string();
                         let expires_in = 3600; // token expiry in seconds
 
-                        let client = redis::Client::open("redis://127.0.0.1/").unwrap();
+                        let client = redis::Client::open("redis://127.0.0.1/")?;
                         let mut con = client.get_connection()?;
 
-                        let _: () = con.lpush(format!("{}::access_tokens", username_s), &access_token).await?;
+                        let _: () =
+                            con.lpush(format!("{}::access_tokens", username_s), &access_token)?;
 
                         return Ok(web::Json(Token {
                             access_token,
@@ -54,7 +68,7 @@ async fn token(
                         }));
                     }
                 }
-                Err(_) => {}
+                None => return Err(AuthError::NotFound("User")),
             }
         }
     }

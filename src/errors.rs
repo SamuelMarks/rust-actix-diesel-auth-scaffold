@@ -1,4 +1,3 @@
-use std::iter::Iterator;
 use std::string::ToString;
 
 #[derive(derive_more::Display, derive_more::Error, derive_more::From, Debug)]
@@ -10,10 +9,7 @@ pub enum AuthError {
     NotFound(&'static str) = 404,
 
     #[display("{body:?}")]
-    BadRequest {
-        mime: mime::Mime,
-        body: String,
-    } = 500,
+    BadRequest { mime: mime::Mime, body: String } = 500,
 
     #[error(ignore)]
     #[display("{_0:?}")]
@@ -34,14 +30,18 @@ pub enum AuthError {
     StdIoError { error: std::io::Error } = 700,
 
     #[display("`diesel::result::Error` error. {error:?}")]
-    DieselError {
-        error: diesel::result::Error,
-    } = 704,
+    DieselError { error: diesel::result::Error } = 704,
 
     #[display("`diesel::r2d2::Error` error. {error:?}")]
-    DieselR2d2Error {
-        error: diesel::r2d2::Error,
-    } = 705,
+    DieselR2d2Error { error: diesel::r2d2::Error } = 705,
+
+    #[display("`diesel_migrations::MigrationError` error. {error:?}")]
+    DieselMigrationError {
+        error: diesel_migrations::MigrationError,
+    } = 706,
+
+    #[display("`r2d2::Error` error. {error:?}")]
+    R2d2Error { error: diesel::r2d2::PoolError } = 707,
 
     #[error(ignore)]
     #[display("{_0:?}")]
@@ -52,6 +52,17 @@ pub enum AuthError {
 
     #[display("`std::str::Utf8Error` error. {error:?}")]
     Utf8Error { error: std::str::Utf8Error } = 739,
+
+    #[display("`redis::RedisError` error. {error:?}")]
+    RedisError { error: redis::RedisError } = 750,
+
+    #[display("`diesel::result::ConnectionError` error. {error:?}")]
+    DieselConnectionError {
+        error: diesel::result::ConnectionError,
+    } = 751,
+
+    #[display("`argon2::password_hash::Error` error. {error:?}")]
+    Argon2PasswordHashError { error: argon2::password_hash::Error } = 752,
 }
 
 impl AuthError {
@@ -61,36 +72,18 @@ impl AuthError {
 }
 
 fn to_http_response(auth_error: AuthError) -> actix_web::HttpResponse {
-        let status_code = http::status::StatusCode::from(
-            {
-                let _status_code: u16 = {
-                    if let AuthError::ExitCode(exit_code) = auth_error {
-                        if exit_code == std::process::ExitCode::SUCCESS {
-                            200
-                        } else {
-                            500
-                        }
-                    } else {
-                        auth_error.discriminant()
-                    }
-                };
-                if _status_code < 600 && _status_code > 100 {
-                    _status_code
-                } else {
-                    500
-                }
-            });
-        let (body, mime) = {
-            if let AuthError::BadRequest {mime, body} = auth_error {
-                (body, mime)
-            } else {
-                (auth_error.to_string(), mime::APPLICATION_JSON)
-            }
-        };
-        actix_web::HttpResponseBuilder::new(status_code)
-            .content_type(mime)
-            .set_body(body)
-            .unwrap()
+    use actix_web::ResponseError;
+    let status_code = auth_error.status_code();
+    let (body, mime) = {
+        if let AuthError::BadRequest { mime, body } = auth_error {
+            (body, mime)
+        } else {
+            (auth_error.to_string(), mime::APPLICATION_JSON)
+        }
+    };
+    actix_web::HttpResponseBuilder::new(status_code)
+        .content_type(mime)
+        .body(body)
 }
 
 impl Into<actix_web::HttpResponse> for AuthError {
@@ -99,9 +92,42 @@ impl Into<actix_web::HttpResponse> for AuthError {
     }
 }
 
-impl Into<dyn actix_web::ResponseError> for AuthError {
-    fn into(self) -> (dyn actix_web::ResponseError + 'static) {
-        to_http_response(self)
+const VALID_HTTP_CODES: [u16; 57] /*std::collections::HashSet<u16>*/ = [
+    100, 101, 102, 200, 201, 202, 203, 204, 205, 206, 300, 301, 302, 303, 304, 305, 307, 308, 400,
+    401, 402, 403, 404, 405, 406, 407, 408, 409, 410, 411, 412, 413, 414, 415, 416, 417, 418, 421,
+    422, 423, 424, 426, 428, 429, 431, 451, 500, 501, 502, 503, 504, 505, 506, 507, 508, 510, 511,
+];
+
+impl actix_web::ResponseError for AuthError {
+    fn status_code(&self) -> http::StatusCode {
+        let _status_code: u16 = {
+            if let AuthError::ExitCode(exit_code) = self {
+                if exit_code == &std::process::ExitCode::SUCCESS {
+                    200u16
+                } else {
+                    500u16
+                }
+            } else {
+                self.discriminant()
+            }
+        };
+
+        http::StatusCode::from_u16(if VALID_HTTP_CODES.contains(&_status_code) {
+            _status_code
+        } else {
+            500u16
+        })
+        .unwrap()
+    }
+
+    fn error_response(&self) -> actix_web::HttpResponse {
+        actix_web::HttpResponse::InternalServerError().json(
+            if let AuthError::BadRequest { mime: _, body } = self {
+                body.to_owned()
+            } else {
+                self.to_string()
+            },
+        )
     }
 }
 
@@ -154,13 +180,13 @@ impl<T: std::any::Any> std::process::Termination for SuccessOrAuthError<T> {
 
         match self {
             SuccessOrAuthError::Ok(e)
-            if std::any::TypeId::of::<T>()
-                == std::any::TypeId::of::<std::process::ExitCode>() =>
-                {
-                    *(&e as &dyn std::any::Any)
-                        .downcast_ref::<std::process::ExitCode>()
-                        .unwrap()
-                }
+                if std::any::TypeId::of::<T>()
+                    == std::any::TypeId::of::<std::process::ExitCode>() =>
+            {
+                *(&e as &dyn std::any::Any)
+                    .downcast_ref::<std::process::ExitCode>()
+                    .unwrap()
+            }
             SuccessOrAuthError::Ok(_) => std::process::ExitCode::SUCCESS,
             SuccessOrAuthError::Err(err) => match err {
                 AuthError::StdIoError { ref error } if error.raw_os_error().is_some() => {
@@ -180,7 +206,7 @@ impl<T: std::any::Any> std::process::Termination for SuccessOrAuthError<T> {
 
 // TODO: Get `Into<AuthError>` syntax working
 impl std::ops::FromResidual<Result<std::convert::Infallible, AuthError>>
-for SuccessOrAuthError<std::process::ExitCode>
+    for SuccessOrAuthError<std::process::ExitCode>
 {
     fn from_residual(residual: Result<std::convert::Infallible, AuthError>) -> Self {
         SuccessOrAuthError::Err(residual./*into_*/err().unwrap())
@@ -188,7 +214,7 @@ for SuccessOrAuthError<std::process::ExitCode>
 }
 
 impl std::ops::FromResidual<Result<std::convert::Infallible, std::io::Error>>
-for SuccessOrAuthError<std::process::ExitCode>
+    for SuccessOrAuthError<std::process::ExitCode>
 {
     fn from_residual(residual: Result<std::convert::Infallible, std::io::Error>) -> Self {
         SuccessOrAuthError::Err(AuthError::from(residual./*into_*/err().unwrap()))

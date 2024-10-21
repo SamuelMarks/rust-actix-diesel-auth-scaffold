@@ -11,15 +11,14 @@ diesel::table! {
 }
 
 diesel::table! {
-    user (id) {
-        id -> Int4,
-        username -> Nullable<Text>,
-        password_hash -> Nullable<Text>,
+    users (username) {
+        #[max_length = 50]
+        username -> Varchar,
+        #[max_length = 50]
+        password_hash -> Nullable<Varchar>,
+        role -> Nullable<Text>,
         created_at -> Timestamp,
     }
 }
 
-diesel::allow_tables_to_appear_in_same_query!(
-    clients,
-    user,
-);
+diesel::allow_tables_to_appear_in_same_query!(clients, users,);

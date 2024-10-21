@@ -1,18 +1,18 @@
-use diesel::prelude::{Queryable, Insertable};
-use chrono::NaiveDateTime;
+use diesel::prelude::{Insertable, Queryable};
+use diesel::Selectable;
 
-#[derive(Queryable)]
+#[derive(Queryable, Selectable, PartialEq, Debug)]
+#[diesel(table_name = crate::schema::users)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct User {
-    pub id: i32,
     pub username: String,
     pub password_hash: String,
-    pub created_at: NaiveDateTime,
+    pub role: String,
+    pub created_at: std::time::SystemTime,
 }
 
-use crate::schema::user::dsl::user;
-
 #[derive(Insertable)]
-#[table_name="user"]
+#[diesel(table_name = crate::schema::users)]
 pub struct NewUser<'a> {
     pub username: &'a str,
     pub password_hash: &'a str,
