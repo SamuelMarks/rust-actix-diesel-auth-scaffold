@@ -10,7 +10,6 @@ pub struct Client {
     pub created_at: NaiveDateTime,
 }
 
-
 use crate::schema::clients::dsl::clients;
 
 #[derive(Insertable)]

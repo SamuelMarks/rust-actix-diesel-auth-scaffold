@@ -1,4 +1,4 @@
-use actix_web::{web, HttpResponse, Responder, post};
+use actix_web::{web, post};
 use argon2::{Argon2, PasswordVerifier};
 use serde::Deserialize;
 use diesel::prelude::*;
@@ -6,6 +6,8 @@ use diesel::r2d2::{self, ConnectionManager};
 use redis::Commands;
 use uuid::Uuid;
 
+use crate::errors::AuthError;
+use crate::models::token::Token;
 use crate::models::user::User;
 
 type DbPool = r2d2::Pool<ConnectionManager<PgConnection>>;
@@ -22,9 +24,9 @@ struct TokenRequest {
 #[post("/token")]
 async fn token(
     pool: web::Data<DbPool>,
-    form: web::Form<TokenRequest>
-) -> impl Responder {
-    let mut conn = pool.get().expect("Couldn't get db connection from pool");
+    form: web::Form<TokenRequest>,
+) -> Result<web::Json<Token>, AuthError> {
+    let mut conn = pool.get()?;
 
     if form.grant_type == "password" {
         if let (Some(username_s), Some(password)) = (&form.username, &form.password) {
@@ -43,21 +45,22 @@ async fn token(
                         let client = redis::Client::open("redis://127.0.0.1/").unwrap();
                         let mut con = client.get_connection()?;
 
-                        let _: () = con.lpush(format!("{}::access_tokens", username_s), access_token).await?;
+                        let _: () = con.lpush(format!("{}::access_tokens", username_s), &access_token).await?;
 
-                        return HttpResponse::Ok().json(serde_json::json!({
-                            "access_token": access_token,
-                            "token_type": "Bearer",
-                            "expires_in": expires_in
+                        return Ok(web::Json(Token {
+                            access_token,
+                            expires_in,
+                            token_type: String::from("Bearer"),
                         }));
                     }
-                },
+                }
                 Err(_) => {}
             }
         }
     }
 
-    HttpResponse::BadRequest().json(serde_json::json!({
-        "error": "invalid_grant"
-    }))
+    Err(AuthError::BadRequest {
+        mime: mime::APPLICATION_JSON,
+        body: serde_json::json!({"error": "invalid_grant"}).to_string(),
+    })
 }

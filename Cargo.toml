@@ -6,11 +6,14 @@ license = "Apache-2.0 OR MIT OR CC0"
 
 [dependencies]
 actix-web = "4"
-argon2 = "0.5.3"
+argon2 = "^0.5"
 chrono = "^0.4"
+derive_more = { version = "^1", features = ["display", "error", "from", "from_str"] }
 diesel = { version = "^2.2", features = ["postgres", "r2d2"] }
 dotenvy = "^0.15"
+mime = "0.3.17"
 redis = { version = "^0.27", features = ["aio", "async-std-comp"] }
 serde = { version = "^1", features = ["derive"] }
 serde_json = "^1"
-uuid = { version = "1.11.0", features = ["v4"] }
+uuid = { version = "^1.11", features = ["v4"] }
+http = "0.2.12"

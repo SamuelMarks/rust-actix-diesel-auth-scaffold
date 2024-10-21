@@ -9,8 +9,10 @@ pub struct User {
     pub created_at: NaiveDateTime,
 }
 
+use crate::schema::user::dsl::user;
+
 #[derive(Insertable)]
-#[table_name="users"]
+#[table_name="user"]
 pub struct NewUser<'a> {
     pub username: &'a str,
     pub password_hash: &'a str,
