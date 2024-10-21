@@ -1,7 +1,7 @@
 CREATE TABLE "users"
 (
-    username      varchar(50) primary key,
-    password_hash varchar(50),
-    role          text               DEFAULT 'regular',
-    created_at    TIMESTAMP NOT NULL DEFAULT current_timestamp
+    username      VARCHAR(50) PRIMARY KEY,
+    password_hash VARCHAR(50) NOT NULL,
+    role          TEXT        NOT NULL DEFAULT 'regular',
+    created_at    TIMESTAMP   NOT NULL DEFAULT current_timestamp
 );
