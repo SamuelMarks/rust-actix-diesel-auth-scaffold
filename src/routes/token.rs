@@ -55,7 +55,10 @@ async fn token(
                         let access_token = Uuid::new_v4().to_string();
                         let expires_in = 3600; // token expiry in seconds
 
-                        let client = redis::Client::open("redis://127.0.0.1/")?;
+                        let client = redis::Client::open(
+                            std::env::var("REDIS_URL")
+                                .unwrap_or(String::from("redis://127.0.0.1/")),
+                        )?;
                         let mut con = client.get_connection()?;
 
                         let _: () =
