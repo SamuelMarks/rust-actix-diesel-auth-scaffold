@@ -17,10 +17,10 @@ Add an `.env` file or otherwise add these environment variables; replacing conne
 
 ### Main entrypoint
 
-In your own project, add dependencies to your Cargo.toml with `cargo add --git https://github.com/offscale/rust-actix-diesel-auth-scaffold` or by manually editing your `Cargo.toml` like so:
+In your own project, add dependencies to your Cargo.toml with `cargo add --git https://github.com/SamuelMarks/rust-actix-diesel-auth-scaffold` or by manually editing your `Cargo.toml` like so:
 ```toml
 [dependencies]
-rust-actix-diesel-auth-scaffold = { git = "https://github.com/offscale/rust-actix-diesel-auth-scaffold", version = "0.0.1" }
+rust-actix-diesel-auth-scaffold = { git = "https://github.com/SamuelMarks/rust-actix-diesel-auth-scaffold", version = "0.0.1" }
 ```
 
 Then in your `main.rs` add:

@@ -1,6 +1,6 @@
 use actix_web::{post, web};
 use argon2::{Argon2, PasswordVerifier};
-use diesel::prelude::*;
+use diesel::{OptionalExtension, QueryDsl, RunQueryDsl, SelectableHelper};
 use diesel::r2d2::{self, ConnectionManager};
 use redis::Commands;
 use serde::Deserialize;
@@ -10,7 +10,7 @@ use crate::errors::AuthError;
 use crate::models::token::Token;
 use crate::models::user::User;
 
-type DbPool = r2d2::Pool<ConnectionManager<PgConnection>>;
+type DbPool = r2d2::Pool<ConnectionManager<diesel::PgConnection>>;
 
 #[derive(Deserialize)]
 struct TokenRequest {
@@ -27,6 +27,7 @@ async fn token(
     form: web::Form<TokenRequest>,
 ) -> Result<web::Json<Token>, AuthError> {
     let mut conn = pool.get()?;
+    log::info!("POST /token");
 
     if form.grant_type == "password" {
         if let (Some(username_s), Some(password)) = (&form.username, &form.password) {

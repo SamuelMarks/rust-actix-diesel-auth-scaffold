@@ -719,6 +719,7 @@ dependencies = [
  "itoa",
  "pq-sys",
  "r2d2",
+ "serde_json",
 ]
 
 [[package]]
@@ -1543,6 +1544,7 @@ dependencies = [
  "diesel_migrations",
  "dotenvy",
  "http",
+ "log",
  "mime",
  "redis",
  "serde",

@@ -121,6 +121,7 @@ impl actix_web::ResponseError for AuthError {
     }
 
     fn error_response(&self) -> actix_web::HttpResponse {
+        println!("error_response: {:#?}", self);
         actix_web::HttpResponse::InternalServerError().json(
             if let AuthError::BadRequest { mime: _, body } = self {
                 body.to_owned()
