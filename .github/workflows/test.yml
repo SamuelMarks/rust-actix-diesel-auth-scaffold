@@ -1,0 +1,36 @@
+name: "Test Suite"
+on:
+  push:
+  pull_request:
+
+jobs:
+  services:
+    postgres:
+      image: postgres
+      env:
+        POSTGRES_PASSWORD: postgres
+      options: >-
+        --health-cmd pg_isready
+        --health-interval 10s
+        --health-timeout 5s
+        --health-retries 5
+      ports:
+        - 5432:5432
+    redis:
+      image: redis
+      options: >-
+        --health-cmd "redis-cli ping"
+        --health-interval 10s
+        --health-timeout 5s
+        --health-retries 5
+
+  test:
+    name: cargo test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+      - run: cargo test --all-features
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
+          REDIS_URL: redis://127.0.0.1/
