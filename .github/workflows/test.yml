@@ -30,8 +30,11 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - uses: actions-rust-lang/setup-rust-toolchain@v1
-      - run: cargo test --all-features
+      - run: |
+          apk add rustup
+          rustup nightly
+          rustup default nightly
+          cargo test --all-features
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
           REDIS_URL: redis://127.0.0.1/
