@@ -31,7 +31,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: |
-          apk add rustup
+          apk add rustup musl-dev
           rustup default nightly
           cargo test --all-features
         env:
