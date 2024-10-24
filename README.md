@@ -4,6 +4,8 @@ rust-actix-diesel-auth-scaffold
 
 Simple baseline scaffold to get you started using actix + diesel with a custom OAuth2 implementation.
 
+For example runnable server, see child repository: https://github.com/SamuelMarks/serve-actix-diesel-auth-scaffold
+
 ## Usage
 
 Install Rust, `git`, and ensure you have your PostgreSQL and Redis/Valkey services setup.

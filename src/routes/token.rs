@@ -53,7 +53,7 @@ async fn token(
                 .execute(&mut conn)?;
             */
 
-            match maybe_user {
+            return match maybe_user {
                 Some(user) => {
                     if Argon2::default()
                         .verify_password(
@@ -65,13 +65,13 @@ async fn token(
                         )
                         .is_ok()
                     {
-                        return generate_tokens(username_s);
+                        generate_tokens(username_s.as_str(), user.role.as_str())
                     } else {
-                        return Err(AuthError::Unauthorised("User"));
+                        Err(AuthError::Unauthorised("User"))
                     }
                 }
                 None => {
-                    return if NO_PUBLIC_REGISTRATION {
+                    if NO_PUBLIC_REGISTRATION {
                         Err(AuthError::NotFound("User"))
                     } else {
                         let salt = argon2::password_hash::SaltString::generate(
@@ -81,23 +81,17 @@ async fn token(
                             .hash_password(password.as_ref(), &salt)?
                             .to_string();
 
-                        let rows = diesel::insert_into(users)
+                        let user = diesel::insert_into(users)
                             .values(&NewUser {
                                 username: username_s,
                                 password_hash: gen_password_hash.as_str(),
                             })
-                            .execute(&mut conn)?;
-                        if rows != 1 {
-                            Err(AuthError::BadRequest {
-                                mime: mime::APPLICATION_JSON,
-                                body: String::from("User insert affected rows not equal to 1"),
-                            })
-                        } else {
-                            generate_tokens(username_s)
-                        }
+                            .returning(User::as_returning())
+                            .get_result(&mut conn)?;
+                        generate_tokens(username_s, user.role.as_str())
                     }
                 }
-            }
+            };
         }
     }
 
@@ -107,21 +101,23 @@ async fn token(
     })
 }
 
-fn generate_tokens(username_s: &String) -> Result<web::Json<Token>, AuthError> {
+fn generate_tokens(username_s: &str, role: &str) -> Result<web::Json<Token>, AuthError> {
     // Generate and return an access token
     let access_token = Uuid::new_v4().to_string();
     let expires_in = 3600; // token expiry in seconds
 
+    // TODO: Connection pool for redis instantiated same time as PostgreSQL
     let client = redis::Client::open(
         std::env::var("REDIS_URL").unwrap_or(String::from("redis://127.0.0.1/")),
     )?;
     let mut con = client.get_connection()?;
+    let fully_qualified_key = format!("{username_s}::{role}::access_token::{access_token}");
 
-    let _: () = con.lpush(format!("{}::access_tokens", username_s), &access_token)?;
+    let _ = con.set_ex(&fully_qualified_key, expires_in, expires_in)?;
 
     /**/
     Ok(web::Json(Token {
-        access_token,
+        access_token: fully_qualified_key,
         expires_in,
         token_type: String::from("Bearer"),
     }))

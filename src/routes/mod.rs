@@ -1,4 +1,5 @@
 pub mod authorisation;
+pub mod secret;
 pub mod token;
 
 use redis::aio::MultiplexedConnection;

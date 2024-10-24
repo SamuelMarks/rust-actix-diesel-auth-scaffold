@@ -1,6 +1,6 @@
-use actix_web::body::MessageBody;
-
+use crate::models::token::Token;
 use crate::routes::token::TokenRequest;
+use actix_web::body::MessageBody;
 
 lazy_static::lazy_static! {
    static ref INITIATED: std::sync::Arc<std::sync::Mutex<bool>> = std::sync::Arc::new(std::sync::Mutex::new(false));
@@ -59,8 +59,12 @@ async fn test_token_post() {
     let status = resp.status();
     let resp_body_as_bytes = resp.into_body().try_into_bytes().unwrap();
     let resp_body_as_str = std::str::from_utf8(&resp_body_as_bytes).unwrap();
+    let resp_body_as_token: Token = serde_json::from_slice(&resp_body_as_bytes).unwrap();
     println!("resp_body_as_str = {:#?}", resp_body_as_str);
     assert_eq!(status, http::StatusCode::OK);
+    assert!(resp_body_as_token.access_token.len() > 0);
+    assert_eq!(resp_body_as_token.token_type, "Bearer");
+    assert!(resp_body_as_token.expires_in > 0)
     // assert!(status.is_success());
     //assert!(resp.status().is_client_error());
 }

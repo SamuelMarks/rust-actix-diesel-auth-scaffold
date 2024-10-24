@@ -5,6 +5,7 @@ use diesel::Connection;
 use crate::errors::AuthError;
 
 pub mod errors;
+pub mod middleware;
 pub mod models;
 pub mod routes;
 pub mod schema;
