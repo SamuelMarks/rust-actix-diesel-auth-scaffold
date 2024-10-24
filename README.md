@@ -1,5 +1,6 @@
 rust-actix-diesel-auth-scaffold
 ===============================
+[![.github/workflows/test.yml](https://github.com/SamuelMarks/rust-actix-diesel-auth-scaffold/actions/workflows/test.yml/badge.svg)](https://github.com/SamuelMarks/rust-actix-diesel-auth-scaffold/actions/workflows/test.yml)
 [![License](https://img.shields.io/badge/license-Apache--2.0%20OR%20MIT%20OR%20CC0--1.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 Simple baseline scaffold to get you started using actix + diesel with a custom OAuth2 implementation.
