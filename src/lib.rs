@@ -9,6 +9,9 @@ pub mod models;
 pub mod routes;
 pub mod schema;
 
+#[cfg(test)]
+mod tests;
+
 pub fn establish_connection() -> Result<diesel::PgConnection, AuthError> {
     dotenvy::dotenv().ok();
 

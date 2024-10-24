@@ -5,6 +5,11 @@ use std::string::ToString;
 pub enum AuthError {
     #[error(ignore)]
     #[from(skip)]
+    #[display("Unauthorised({_0:#?})")]
+    Unauthorised(&'static str) = 401,
+
+    #[error(ignore)]
+    #[from(skip)]
     #[display("NotFound({_0:#?})")]
     NotFound(&'static str) = 404,
 
@@ -63,6 +68,9 @@ pub enum AuthError {
 
     #[display("`argon2::password_hash::Error` error. {error:?}")]
     Argon2PasswordHashError { error: argon2::password_hash::Error } = 752,
+
+    #[display("`argon2::Error` error. {error:?}")]
+    Argon2Error { error: argon2::Error } = 753,
 }
 
 impl AuthError {
@@ -108,27 +116,27 @@ impl actix_web::ResponseError for AuthError {
                     500u16
                 }
             } else {
-                self.discriminant()
+                let code = self.discriminant();
+                if VALID_HTTP_CODES.contains(&code) {
+                    code
+                } else {
+                    500u16
+                }
             }
         };
 
-        http::StatusCode::from_u16(if VALID_HTTP_CODES.contains(&_status_code) {
-            _status_code
-        } else {
-            500u16
-        })
-        .unwrap()
+        http::StatusCode::from_u16(_status_code).unwrap()
     }
 
     fn error_response(&self) -> actix_web::HttpResponse {
-        println!("error_response: {:#?}", self);
-        actix_web::HttpResponse::InternalServerError().json(
-            if let AuthError::BadRequest { mime: _, body } = self {
-                body.to_owned()
+        actix_web::HttpResponse::build(self.status_code()).json(serde_json::json!({
+        "error": "AuthError",
+        "error_message": if let AuthError::BadRequest { mime: _, body } = self {
+                format!("{}", body)
             } else {
-                self.to_string()
-            },
-        )
+                format!("{}", self)
+            }
+        }))
     }
 }
 
