@@ -1,4 +1,5 @@
 pub mod authorisation;
+pub mod logout;
 pub mod secret;
 pub mod token;
 

@@ -1,44 +1,11 @@
 use actix_web::body::MessageBody;
 
-use diesel_migrations::MigrationHarness;
-
-use crate::establish_connection;
 use crate::models::token::Token;
 use crate::routes::token::TokenRequest;
 
-lazy_static::lazy_static! {
-   static ref INITIATED: std::sync::Arc<std::sync::Mutex<bool>> = std::sync::Arc::new(std::sync::Mutex::new(false));
-
-    static ref POOL: diesel::r2d2::Pool<diesel::r2d2::ConnectionManager<diesel::PgConnection>> = {
-       let db_url = std::env::var("DATABASE_URL").expect("Database url not set");
-       let manager = diesel::r2d2::ConnectionManager::<diesel::PgConnection>::new(db_url);
-       let pool_size = match cfg!(test) {
-           true => 1,
-           false => 10,
-       };
-       diesel::r2d2::Builder::new().max_size(pool_size).build(manager).expect("Failed to create db pool")
-   };
-}
-
-pub const MIGRATIONS: diesel_migrations::EmbeddedMigrations =
-    diesel_migrations::embed_migrations!("./migrations");
-
-pub fn db_init() {
-    log::info!("Initializing DB");
-    lazy_static::initialize(&POOL);
-    let mut connection = establish_connection().expect("Failed to create connection");
-    /*let mut conn = POOL.get().expect("Failed to get db connection");
-    if cfg!(test) {
-        conn.begin_test_transaction().expect("Failed to start transaction");
-    }*/
-    connection
-        .run_pending_migrations(MIGRATIONS)
-        .expect("Failed to run migrations");
-}
-
 #[cfg(test)]
 pub fn init() {
-    let mut initiated = INITIATED.lock().unwrap();
+    let mut initiated = crate::INITIATED.lock().unwrap();
     if *initiated == false {
         dotenvy::from_filename(std::path::Path::new("..").join("..").join(".env")).ok();
         *initiated = true;
@@ -48,10 +15,10 @@ pub fn init() {
 #[actix_web::test]
 async fn test_token_post() {
     init();
-    db_init();
+    crate::db_init();
     let app = actix_web::test::init_service(
         actix_web::App::new()
-            .app_data(actix_web::web::Data::new(POOL.clone()))
+            .app_data(actix_web::web::Data::new(crate::POOL.clone()))
             .service(crate::routes::token::token),
     )
     .await;
