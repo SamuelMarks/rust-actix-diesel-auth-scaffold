@@ -6,7 +6,7 @@ on:
 jobs:
   container-job:
     runs-on: ubuntu-latest
-    container: rustlang/rust:nightly-alpine
+    container: rustlang/rust:nightly-slim
 
     services:
       postgres:
@@ -31,9 +31,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: |
-          apk add rustup musl-dev
-          rustup default nightly
-          cargo test --all-features
+          apt update -qq
+          apt install -y libcom-err2 libffi8 libgmp10 libgnutls30 libgssapi-krb5-2 libhogweed6 libidn2-dev libk5crypto3
+          apt install -y libkeyutils1 libkrb5-3 libldap-2.5-0 libnettle8 libp11-kit0 libpq-dev libsasl2-2 libtasn1-6
+          apt install -y libunistring2
+          cargo test
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
           REDIS_URL: redis://127.0.0.1/

@@ -16,7 +16,7 @@ pub async fn validator(
     ) {
         if let Ok(mut conn) = client.get_connection() {
             if let Ok(true) = conn.exists(&credentials.token()) {
-                return Ok(req)
+                return Ok(req);
             }
         }
     }
