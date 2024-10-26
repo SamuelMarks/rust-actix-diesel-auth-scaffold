@@ -113,7 +113,7 @@ fn generate_tokens(username_s: &str, role: &str) -> Result<web::Json<Token>, Aut
     let mut con = client.get_connection()?;
     let fully_qualified_key = format!("{username_s}::{role}::access_token::{access_token}");
 
-    let _ = con.set_ex(&fully_qualified_key, expires_in, expires_in)?;
+    let _: () = con.set_ex(&fully_qualified_key, expires_in, expires_in)?;
 
     /**/
     Ok(web::Json(Token {

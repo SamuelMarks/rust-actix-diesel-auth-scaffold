@@ -3,24 +3,22 @@ services:
   valkey:
     image: valkey/valkey:alpine3.20
   postgres:
-    image: 16.3-alpine3.20
+    image: postgres:alpine3.20
     environment:
       POSTGRES_USER: rest_api_user
       POSTGRES_PASSWORD: rest_api_pass
       POSTGRES_DB: rest_api_db
   api:
-    build: .
+    build:
+      context: .
+      dockerfile: debian.Dockerfile
     ports:
-      - 3000:3000
-    volumes:
-      - .:/rest-api
-      - /rest-api/node_modules
+      - "3000:3000"
     depends_on:
       - postgres
       - valkey
     environment:
       DATABASE_URL: postgres://rest_api_user:rest_api_pass@postgres/rest_api_db
-      REDIS_URL: http://redis
-    command: ["/bin/wait_for_it.sh", "postgres:5432", "--",
-              "/bin/wait_for_it.sh", "redis:6379", "--",
-              "/usr/bin/cargo", "test"]
+      REDIS_URL: redis://valkey:6379
+      RUST_BACKTRACE: full
+    entrypoint: [ "/usr/local/cargo/bin/cargo", "test" ]

@@ -7,7 +7,31 @@ Simple baseline scaffold to get you started using actix + diesel with a custom O
 
 For example runnable server, see child repository: https://github.com/SamuelMarks/serve-actix-diesel-auth-scaffold
 
-## Usage
+## Docker usage
+
+Install Docker, and then run the following, which will run `cargo test` with Valkey and PostgreSQL from Docker:
+```sh
+$ docker compose up
+````
+
+NOTE: You may need to configure this for your architecture first, for example:
+```sh
+$ docker compose build --build-arg ARCH_VARIANT='amd64' \
+                       --build-arg ARCH='x86_64'
+$ docker compose up
+```
+
+Or to work with just one image and provide your own database and redis:
+```sh
+$ docker build -f 'debian.Dockerfile' -t "${PWD##*/}"':latest' .
+$ docker run -e DATABASE_URL="$RDBMS_URI" \
+             -e REDIS_URL='localhost:6379' \
+             -p '3000:3000' \
+             --name 'cargo_test_lib' \
+             "${PWD##*/}"
+```
+
+## Native Usage
 
 Install Rust, `git`, and ensure you have your PostgreSQL and Redis/Valkey services setup.
 

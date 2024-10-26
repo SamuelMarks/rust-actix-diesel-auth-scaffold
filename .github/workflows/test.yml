@@ -20,9 +20,7 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-        ports:
-          - 5432:5432
-      redis:
+      valkey:
         image: valkey/valkey:alpine3.20
         options: >-
           --health-cmd "valkey-cli ping"
@@ -33,12 +31,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: |
-          apt update -qq
+          apt-get update -qq
           apt install -y libcom-err2 libffi8 libgmp10 libgnutls30 libgssapi-krb5-2 libhogweed6 libidn2-dev libk5crypto3
           apt install -y libkeyutils1 libkrb5-3 libldap-2.5-0 libnettle8 libp11-kit0 libpq-dev libsasl2-2 libtasn1-6
           apt install -y libunistring2
-          sleep 12s
           cargo test
         env:
           DATABASE_URL: postgres://rest_api_user:rest_api_pass@postgres/rest_api_db
-          REDIS_URL: redis://127.0.0.1/
+          REDIS_URL: redis://valkey:6379
+          RUST_BACKTRACE: full

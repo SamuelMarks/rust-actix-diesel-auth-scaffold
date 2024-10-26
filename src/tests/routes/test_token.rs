@@ -1,6 +1,10 @@
+use actix_web::body::MessageBody;
+
+use diesel_migrations::MigrationHarness;
+
+use crate::establish_connection;
 use crate::models::token::Token;
 use crate::routes::token::TokenRequest;
-use actix_web::body::MessageBody;
 
 lazy_static::lazy_static! {
    static ref INITIATED: std::sync::Arc<std::sync::Mutex<bool>> = std::sync::Arc::new(std::sync::Mutex::new(false));
@@ -16,14 +20,20 @@ lazy_static::lazy_static! {
    };
 }
 
+pub const MIGRATIONS: diesel_migrations::EmbeddedMigrations =
+    diesel_migrations::embed_migrations!("./migrations");
+
 pub fn db_init() {
     log::info!("Initializing DB");
     lazy_static::initialize(&POOL);
-    /*let conn = connection().expect("Failed to get db connection");
+    let mut connection = establish_connection().expect("Failed to create connection");
+    /*let mut conn = POOL.get().expect("Failed to get db connection");
     if cfg!(test) {
         conn.begin_test_transaction().expect("Failed to start transaction");
-    }
-    embedded_migrations::run(&conn).unwrap();*/
+    }*/
+    connection
+        .run_pending_migrations(MIGRATIONS)
+        .expect("Failed to run migrations");
 }
 
 #[cfg(test)]
@@ -38,7 +48,7 @@ pub fn init() {
 #[actix_web::test]
 async fn test_token_post() {
     init();
-    // db_init();
+    db_init();
     let app = actix_web::test::init_service(
         actix_web::App::new()
             .app_data(actix_web::web::Data::new(POOL.clone()))
@@ -59,8 +69,8 @@ async fn test_token_post() {
     let status = resp.status();
     let resp_body_as_bytes = resp.into_body().try_into_bytes().unwrap();
     let resp_body_as_str = std::str::from_utf8(&resp_body_as_bytes).unwrap();
-    let resp_body_as_token: Token = serde_json::from_slice(&resp_body_as_bytes).unwrap();
     println!("resp_body_as_str = {:#?}", resp_body_as_str);
+    let resp_body_as_token: Token = serde_json::from_slice(&resp_body_as_bytes).unwrap();
     assert_eq!(status, http::StatusCode::OK);
     assert!(resp_body_as_token.access_token.len() > 0);
     assert_eq!(resp_body_as_token.token_type, "Bearer");
