@@ -44,3 +44,5 @@ pub fn establish_connection() -> Result<diesel::PgConnection, errors::AuthError>
     let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
     diesel::PgConnection::establish(&database_url).map_err(From::from)
 }
+
+pub type DbPool = diesel::r2d2::Pool<diesel::r2d2::ConnectionManager<diesel::PgConnection>>;

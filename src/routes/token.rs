@@ -1,6 +1,5 @@
 use actix_web::{post, web};
 use argon2::{Argon2, PasswordHasher, PasswordVerifier};
-use diesel::r2d2::{self, ConnectionManager};
 use diesel::{OptionalExtension, QueryDsl, RunQueryDsl, SelectableHelper};
 use redis::Commands;
 use serde::{Deserialize, Serialize};
@@ -9,8 +8,8 @@ use uuid::Uuid;
 use crate::errors::AuthError;
 use crate::models::token::Token;
 use crate::models::user::{NewUser, User};
+use crate::DbPool;
 
-type DbPool = r2d2::Pool<ConnectionManager<diesel::PgConnection>>;
 const NO_PUBLIC_REGISTRATION: bool = match option_env!("NO_PUBLIC_REGISTRATION") {
     Some(_) => true, // s == "" || s == "true" || s == "True"|| s == "t" || s == "T" || s == "1",
     None => false,
