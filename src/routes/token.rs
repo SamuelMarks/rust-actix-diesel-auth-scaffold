@@ -103,7 +103,10 @@ async fn token(
 fn generate_tokens(username_s: &str, role: &str) -> Result<web::Json<Token>, AuthError> {
     // Generate and return an access token
     let access_token = Uuid::new_v4().to_string();
-    let expires_in = 3600; // token expiry in seconds
+    let expires_in: u64 = std::env::var("RADAS_EXPIRES_IN")
+        .unwrap_or(String::from("2628000"))
+        .parse()
+        .expect("RADAS_EXPIRES_IN that parses into u64"); // token expiry in seconds [1 month]
 
     // TODO: Connection pool for redis instantiated same time as PostgreSQL
     let client = redis::Client::open(
@@ -114,7 +117,6 @@ fn generate_tokens(username_s: &str, role: &str) -> Result<web::Json<Token>, Aut
 
     let _: () = con.set_ex(&fully_qualified_key, expires_in, expires_in)?;
 
-    /**/
     Ok(web::Json(Token {
         access_token: fully_qualified_key,
         expires_in,
