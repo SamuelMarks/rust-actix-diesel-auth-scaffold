@@ -12,10 +12,13 @@ pub mod schema;
 #[cfg(test)]
 mod tests;
 
+pub const CARGO_PKG_VERSION: &'static str = env!("CARGO_PKG_VERSION");
+pub const CARGO_PKG_NAME: &'static str = env!("CARGO_PKG_NAME");
+
 lazy_static::lazy_static! {
    static ref INITIATED: std::sync::Arc<std::sync::Mutex<bool>> = std::sync::Arc::new(std::sync::Mutex::new(false));
 
-    static ref POOL: diesel::r2d2::Pool<diesel::r2d2::ConnectionManager<diesel::PgConnection>> = {
+   pub static ref POOL: diesel::r2d2::Pool<diesel::r2d2::ConnectionManager<diesel::PgConnection>> = {
        let db_url = std::env::var("DATABASE_URL").expect("Database url not set");
        let manager = diesel::r2d2::ConnectionManager::<diesel::PgConnection>::new(db_url);
        let pool_size = match cfg!(test) {

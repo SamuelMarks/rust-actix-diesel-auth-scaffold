@@ -6,15 +6,15 @@ license = "Apache-2.0 OR MIT OR CC0"
 
 [dependencies]
 actix-web = "^4"
-actix-web-httpauth = "0.8.2"
+actix-web-httpauth = "^0.8"
 argon2 = "^0.5"
 chrono = "^0.4"
 derive_more = { version = "^1", features = ["display", "error", "from", "from_str"] }
 diesel = { version = "^2.2", features = ["postgres", "r2d2", "serde_json"] }
-diesel_migrations = { version = "2.2.0", features = ["postgres"] }
+diesel_migrations = { version = "^2.2", features = ["postgres"] }
 dotenvy = "^0.15"
 http = "^0.2"
-lazy_static = "1.5.0"
+lazy_static = "^1.5"
 log = "^0.4"
 mime = "^0.3"
 redis = { version = "^0.27", features = ["aio", "async-std-comp", "script"] }
