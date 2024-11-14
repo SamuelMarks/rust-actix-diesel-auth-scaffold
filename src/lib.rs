@@ -4,14 +4,15 @@ use actix_web::body::MessageBody;
 use diesel::Connection;
 use diesel_migrations::MigrationHarness;
 
+use crate::tests::routes::token::helpers::test_token_api;
+
 pub mod errors;
 pub mod middleware;
 pub mod models;
 pub mod routes;
 pub mod schema;
 
-#[cfg(test)]
-mod tests;
+pub mod tests;
 
 pub const CARGO_PKG_VERSION: &'static str = env!("CARGO_PKG_VERSION");
 pub const CARGO_PKG_NAME: &'static str = env!("CARGO_PKG_NAME");
@@ -35,22 +36,19 @@ pub async fn get_token(username_s: String, password_s: String) -> String {
     let app = actix_web::test::init_service(
         actix_web::App::new()
             .app_data(actix_web::web::Data::new(POOL.clone()))
-            .service(routes::token::token),
+            .service(
+                actix_web::web::scope("/api")
+                    .service(routes::token::token)
+                    .service(routes::authorisation::authorise),
+            ),
     )
     .await;
-    let req = actix_web::test::TestRequest::post()
-        .uri("/token")
-        .set_json(routes::token::TokenRequest {
-            grant_type: String::from("password"),
-            username: Some(username_s),
-            password: Some(password_s),
-            client_id: None,
-            client_secret: None,
-        })
-        .to_request();
+    let req = test_token_api::post_username_password(&username_s, &password_s);
     let resp = actix_web::test::call_service(&app, req).await;
     let status = resp.status();
     let resp_body_as_bytes = resp.into_body().try_into_bytes().unwrap();
+    let resp_body_as_str = std::str::from_utf8(&resp_body_as_bytes).unwrap();
+    println!("resp_body_as_str = {:#?}", resp_body_as_str);
     let resp_body_as_token: models::token::Token =
         serde_json::from_slice(&resp_body_as_bytes).unwrap();
     assert_eq!(status, actix_web::http::StatusCode::OK);

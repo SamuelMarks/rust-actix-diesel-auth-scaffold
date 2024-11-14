@@ -1,5 +1,5 @@
-pub(crate) const USERNAMES: [&'static str; 2] = ["username0", "username1"];
-pub(crate) const PASSWORD: &'static str = "password";
+pub const USERNAMES: [&'static str; 2] = ["username0", "username1"];
+pub const PASSWORD: &'static str = "password";
 
 #[macro_export]
 macro_rules! get_secret_app {
@@ -20,13 +20,9 @@ macro_rules! get_secret_app {
     };
 }
 
-static INIT: std::sync::Once = std::sync::Once::new();
-
 pub(crate) async fn prepare_secret_test(username: &str, password: &str) -> String {
     crate::establish_connection().unwrap();
-    INIT.call_once(|| {
-        crate::db_init();
-    });
+    crate::tests::INIT_DB.call_once(|| crate::db_init());
 
     let token = crate::get_token(String::from(username), String::from(password)).await;
     token

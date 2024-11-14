@@ -9,5 +9,4 @@ pub fn init_db_for_test() {
     });
 }
 
-#[cfg(test)]
-mod routes;
+pub mod routes;

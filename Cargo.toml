@@ -5,6 +5,7 @@ edition = "2021"
 license = "Apache-2.0 OR MIT OR CC0"
 
 [dependencies]
+actix-http = "3.9.0"
 actix-web = "^4"
 actix-web-httpauth = "^0.8"
 argon2 = "^0.5"
@@ -21,6 +22,3 @@ redis = { version = "^0.27", features = ["aio", "async-std-comp", "script"] }
 serde = { version = "^1", features = ["derive"] }
 serde_json = "^1"
 uuid = { version = "^1.11", features = ["v4"] }
-
-[dev-dependencies]
-actix-http = "3.9.0"
