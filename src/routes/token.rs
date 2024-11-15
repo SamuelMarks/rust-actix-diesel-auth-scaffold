@@ -15,7 +15,7 @@ const NO_PUBLIC_REGISTRATION: bool = match option_env!("NO_PUBLIC_REGISTRATION")
     None => false,
 };
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, utoipa::ToSchema)]
 pub struct TokenRequest {
     pub grant_type: String,
     pub username: Option<String>,
@@ -24,6 +24,39 @@ pub struct TokenRequest {
     pub client_secret: Option<String>,
 }
 
+fn generate_tokens(username_s: &str, role: &str) -> Result<web::Json<Token>, AuthError> {
+    // Generate and return an access token
+    let access_token = Uuid::new_v4().to_string();
+    let expires_in: u64 = std::env::var("RADAS_EXPIRES_IN")
+        .unwrap_or(String::from("2628000"))
+        .parse()
+        .expect("RADAS_EXPIRES_IN that parses into u64"); // token expiry in seconds [1 month]
+
+    // TODO: Connection pool for redis instantiated same time as PostgreSQL
+    let client = redis::Client::open(
+        std::env::var("REDIS_URL").unwrap_or(String::from("redis://127.0.0.1/")),
+    )?;
+    let mut con = client.get_connection()?;
+    let fully_qualified_key = format!("{username_s}::{role}::access_token::{access_token}");
+
+    let _: () = con.set_ex(&fully_qualified_key, expires_in, expires_in)?;
+
+    Ok(web::Json(Token {
+        access_token: fully_qualified_key,
+        expires_in,
+        token_type: String::from("Bearer"),
+    }))
+}
+
+/// Generate a token for a grant flow
+#[utoipa::path(
+    responses(
+        (status = 200, description = "Token created"),
+        (status = 400, description = "Unauthorized User"),
+        (status = 404, description = "Not Found User"),
+        (status = 500, description = "Bad Request")
+    )
+)]
 #[post("/token")]
 async fn token(
     pool: web::Data<DbPool>,
@@ -98,28 +131,4 @@ async fn token(
         mime: mime::APPLICATION_JSON,
         body: serde_json::json!({"error": "invalid_grant"}).to_string(),
     })
-}
-
-fn generate_tokens(username_s: &str, role: &str) -> Result<web::Json<Token>, AuthError> {
-    // Generate and return an access token
-    let access_token = Uuid::new_v4().to_string();
-    let expires_in: u64 = std::env::var("RADAS_EXPIRES_IN")
-        .unwrap_or(String::from("2628000"))
-        .parse()
-        .expect("RADAS_EXPIRES_IN that parses into u64"); // token expiry in seconds [1 month]
-
-    // TODO: Connection pool for redis instantiated same time as PostgreSQL
-    let client = redis::Client::open(
-        std::env::var("REDIS_URL").unwrap_or(String::from("redis://127.0.0.1/")),
-    )?;
-    let mut con = client.get_connection()?;
-    let fully_qualified_key = format!("{username_s}::{role}::access_token::{access_token}");
-
-    let _: () = con.set_ex(&fully_qualified_key, expires_in, expires_in)?;
-
-    Ok(web::Json(Token {
-        access_token: fully_qualified_key,
-        expires_in,
-        token_type: String::from("Bearer"),
-    }))
 }

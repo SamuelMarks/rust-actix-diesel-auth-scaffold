@@ -47,8 +47,10 @@ pub async fn get_token(username_s: String, password_s: String) -> String {
     let resp = actix_web::test::call_service(&app, req).await;
     let status = resp.status();
     let resp_body_as_bytes = resp.into_body().try_into_bytes().unwrap();
+    /*
     let resp_body_as_str = std::str::from_utf8(&resp_body_as_bytes).unwrap();
     println!("resp_body_as_str = {:#?}", resp_body_as_str);
+    */
     let resp_body_as_token: models::token::Token =
         serde_json::from_slice(&resp_body_as_bytes).unwrap();
     assert_eq!(status, actix_web::http::StatusCode::OK);

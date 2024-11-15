@@ -3,6 +3,12 @@ use actix_web_httpauth::extractors::bearer::BearerAuth;
 
 use crate::errors::AuthError;
 
+/// Logout a user (uses provided Bearer token from Header)
+#[utoipa::path(
+    responses(
+        (status = 200, description = ""),
+    )
+)]
 #[post("/logout")]
 pub async fn logout(credentials: BearerAuth) -> Result<impl Responder, AuthError> {
     if let Some((token_namespace, _)) = credentials.token().rsplit_once("::") {
