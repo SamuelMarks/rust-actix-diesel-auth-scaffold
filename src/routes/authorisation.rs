@@ -1,7 +1,6 @@
 use actix_web::{get, web, HttpResponse, Responder};
-use serde::Deserialize;
 
-#[derive(Deserialize)]
+#[derive(serde::Deserialize, utoipa::ToSchema)]
 struct AuthRequest {
     response_type: String,
     client_id: String,

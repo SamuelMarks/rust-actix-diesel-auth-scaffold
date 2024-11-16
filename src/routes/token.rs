@@ -2,7 +2,6 @@ use actix_web::{post, web};
 use argon2::{Argon2, PasswordHasher, PasswordVerifier};
 use diesel::{OptionalExtension, QueryDsl, RunQueryDsl, SelectableHelper};
 use redis::Commands;
-use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::errors::AuthError;
@@ -15,12 +14,19 @@ const NO_PUBLIC_REGISTRATION: bool = match option_env!("NO_PUBLIC_REGISTRATION")
     None => false,
 };
 
-#[derive(Deserialize, Serialize, utoipa::ToSchema)]
+const NONE_STR_OPTION_FUNC: fn() -> Option<String> = || None;
+
+#[derive(serde::Deserialize, serde::Serialize, utoipa::ToSchema)]
 pub struct TokenRequest {
+    #[schema(example = "password")]
     pub grant_type: String,
+    #[schema(example = "user0")]
     pub username: Option<String>,
+    #[schema(example = "pass0")]
     pub password: Option<String>,
+    #[schema(example = NONE_STR_OPTION_FUNC)]
     pub client_id: Option<String>,
+    #[schema(example = NONE_STR_OPTION_FUNC)]
     pub client_secret: Option<String>,
 }
 
