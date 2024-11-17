@@ -14,19 +14,26 @@ const NO_PUBLIC_REGISTRATION: bool = match option_env!("NO_PUBLIC_REGISTRATION")
     None => false,
 };
 
-const NONE_STR_OPTION_FUNC: fn() -> Option<String> = || None;
-
-#[derive(serde::Deserialize, serde::Serialize, utoipa::ToSchema)]
+#[derive(serde::Deserialize, serde::Serialize, utoipa::ToSchema, Debug)]
 pub struct TokenRequest {
+    /// RFC6749 grant type
     #[schema(example = "password")]
     pub grant_type: String,
+
+    /// optional username (as used, for example, in RFC6749's password grant flow)
     #[schema(example = "user0")]
     pub username: Option<String>,
+
+    /// optional password (as used, for example, in RFC6749's password grant flow)
     #[schema(example = "pass0")]
     pub password: Option<String>,
-    #[schema(example = NONE_STR_OPTION_FUNC)]
+
+    /// optional client ID (as used, for example, in RFC6749's non password non refresh grant flow)
+    #[schema(example = crate::option_default::<String>)]
     pub client_id: Option<String>,
-    #[schema(example = NONE_STR_OPTION_FUNC)]
+
+    /// optional client secret (as used, e.g., in RFC6749's non (password|refresh) grant flow)
+    #[schema(example = crate::option_default::<String>)]
     pub client_secret: Option<String>,
 }
 
@@ -68,7 +75,9 @@ async fn token(
     pool: web::Data<DbPool>,
     form: web::Json<TokenRequest>,
 ) -> Result<web::Json<Token>, AuthError> {
+    log::info!("POST /token");
     let mut conn = pool.get()?;
+    log::info!("POST /token form = {form:#?}");
 
     if form.grant_type == "password" {
         if let (Some(username_s), Some(password)) = (&form.username, &form.password) {

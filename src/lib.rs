@@ -80,3 +80,7 @@ pub fn establish_connection() -> Result<diesel::PgConnection, errors::AuthError>
 }
 
 pub type DbPool = diesel::r2d2::Pool<diesel::r2d2::ConnectionManager<diesel::PgConnection>>;
+
+pub const fn option_default<T>() -> Option<T> {
+    None
+}

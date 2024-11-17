@@ -8,6 +8,7 @@ struct AuthRequest {
     state: Option<String>,
 }
 
+#[utoipa::path()]
 #[get("/authorize")]
 async fn authorise(_query: web::Query<AuthRequest>) -> impl Responder {
     // Validate client_id and redirect_uri

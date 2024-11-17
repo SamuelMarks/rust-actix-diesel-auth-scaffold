@@ -7,7 +7,8 @@ use crate::errors::AuthError;
 #[utoipa::path(
     responses(
         (status = 200, description = ""),
-    )
+    ),
+    security(("password"=[]))
 )]
 #[post("/logout")]
 pub async fn logout(credentials: BearerAuth) -> Result<impl Responder, AuthError> {
