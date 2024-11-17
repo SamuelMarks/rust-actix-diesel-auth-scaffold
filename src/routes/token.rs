@@ -73,14 +73,13 @@ fn generate_tokens(username_s: &str, role: &str) -> Result<web::Json<Token>, Aut
 #[post("/token")]
 async fn token(
     pool: web::Data<DbPool>,
-    form: web::Json<TokenRequest>,
+    form: actix_web::Either<web::Json<TokenRequest>, web::Form<TokenRequest>>,
 ) -> Result<web::Json<Token>, AuthError> {
-    log::info!("POST /token");
     let mut conn = pool.get()?;
-    log::info!("POST /token form = {form:#?}");
+    let token_request = form.into_inner();
 
-    if form.grant_type == "password" {
-        if let (Some(username_s), Some(password)) = (&form.username, &form.password) {
+    if token_request.grant_type == "password" {
+        if let (Some(username_s), Some(password)) = (&token_request.username, &token_request.password) {
             use crate::schema::users::dsl::*;
 
             // Verify user credentials
