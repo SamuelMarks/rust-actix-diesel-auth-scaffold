@@ -79,7 +79,8 @@ pub fn establish_connection() -> Result<diesel::PgConnection, errors::AuthError>
     diesel::PgConnection::establish(&database_url).map_err(From::from)
 }
 
-pub type DbPool = diesel::r2d2::Pool<diesel::r2d2::ConnectionManager<diesel::PgConnection>>;
+pub type DbConnectionManager = diesel::r2d2::ConnectionManager<diesel::PgConnection>;
+pub type DbPool = diesel::r2d2::Pool<DbConnectionManager>;
 
 pub const fn option_default<T>() -> Option<T> {
     None

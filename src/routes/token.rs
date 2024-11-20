@@ -1,24 +1,32 @@
-use actix_web::{post, web};
+use crate::errors::AuthError;
+use crate::models::token::Token;
+use crate::models::user::{NewUser, User};
+use crate::DbConnectionManager;
+use actix_web::post;
 use argon2::{Argon2, PasswordHasher, PasswordVerifier};
 use diesel::{OptionalExtension, QueryDsl, RunQueryDsl, SelectableHelper};
 use redis::Commands;
 use uuid::Uuid;
-
-use crate::errors::AuthError;
-use crate::models::token::Token;
-use crate::models::user::{NewUser, User};
-use crate::DbPool;
 
 const NO_PUBLIC_REGISTRATION: bool = match option_env!("NO_PUBLIC_REGISTRATION") {
     Some(_) => true, // s == "" || s == "true" || s == "True"|| s == "t" || s == "T" || s == "1",
     None => false,
 };
 
+#[derive(serde::Deserialize, serde::Serialize, strum_macros::Display, utoipa::ToSchema, Debug)]
+#[serde(rename_all = "snake_case")]
+pub enum GrantType {
+    Password,
+    AuthorizationCode,
+    ClientCredentials,
+    RefreshToken,
+}
+
 #[derive(serde::Deserialize, serde::Serialize, utoipa::ToSchema, Debug)]
 pub struct TokenRequest {
     /// RFC6749 grant type
     #[schema(example = "password")]
-    pub grant_type: String,
+    pub grant_type: GrantType,
 
     /// optional username (as used, for example, in RFC6749's password grant flow)
     #[schema(example = "user0")]
@@ -37,7 +45,7 @@ pub struct TokenRequest {
     pub client_secret: Option<String>,
 }
 
-fn generate_tokens(username_s: &str, role: &str) -> Result<web::Json<Token>, AuthError> {
+fn generate_tokens(username_s: &str, role: &str) -> Result<actix_web::web::Json<Token>, AuthError> {
     // Generate and return an access token
     let access_token = Uuid::new_v4().to_string();
     let expires_in: u64 = std::env::var("RADAS_EXPIRES_IN")
@@ -54,14 +62,15 @@ fn generate_tokens(username_s: &str, role: &str) -> Result<web::Json<Token>, Aut
 
     let _: () = con.set_ex(&fully_qualified_key, expires_in, expires_in)?;
 
-    Ok(web::Json(Token {
+    Ok(actix_web::web::Json(Token {
         access_token: fully_qualified_key,
         expires_in,
         token_type: String::from("Bearer"),
     }))
 }
 
-/// Generate a token for a grant flow
+/// Generate a token for a grant flow.
+/// Implements https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.3
 #[utoipa::path(
     responses(
         (status = 200, description = "Token created"),
@@ -72,77 +81,90 @@ fn generate_tokens(username_s: &str, role: &str) -> Result<web::Json<Token>, Aut
 )]
 #[post("/token")]
 async fn token(
-    pool: web::Data<DbPool>,
-    form: actix_web::Either<web::Json<TokenRequest>, web::Form<TokenRequest>>,
-) -> Result<web::Json<Token>, AuthError> {
+    pool: actix_web::web::Data<crate::DbPool>,
+    form: actix_web::Either<actix_web::web::Json<TokenRequest>, actix_web::web::Form<TokenRequest>>,
+) -> Result<actix_web::web::Json<Token>, AuthError> {
     let mut conn = pool.get()?;
     let token_request = form.into_inner();
 
-    if token_request.grant_type == "password" {
-        if let (Some(username_s), Some(password)) = (&token_request.username, &token_request.password) {
-            use crate::schema::users::dsl::*;
-
-            // Verify user credentials
-            let maybe_user: Option<User> = users
-                .find(username_s)
-                .select(User::as_select())
-                .first(&mut conn)
-                .optional()?;
-
-            /*
-            hmm, this doesn't seem to have a `RETURNING` syntax:
-
-            diesel::insert_into(users)
-                .values(NewUser{username: username_s, password_hash: password})
-                .on_conflict(username)
-                .do_nothing()
-                .execute(&mut conn)?;
-            */
-
-            return match maybe_user {
-                Some(user) => {
-                    if Argon2::default()
-                        .verify_password(
-                            password.as_ref(),
-                            &argon2::PasswordHash::parse(
-                                user.password_hash.as_str(),
-                                argon2::password_hash::Encoding::default(),
-                            )?,
-                        )
-                        .is_ok()
-                    {
-                        generate_tokens(username_s.as_str(), user.role.as_str())
-                    } else {
-                        Err(AuthError::Unauthorised("User"))
-                    }
-                }
-                None => {
-                    if NO_PUBLIC_REGISTRATION {
-                        Err(AuthError::NotFound("User"))
-                    } else {
-                        let salt = argon2::password_hash::SaltString::generate(
-                            &mut argon2::password_hash::rand_core::OsRng,
-                        );
-                        let gen_password_hash = Argon2::default()
-                            .hash_password(password.as_ref(), &salt)?
-                            .to_string();
-
-                        let user = diesel::insert_into(users)
-                            .values(&NewUser {
-                                username: username_s,
-                                password_hash: gen_password_hash.as_str(),
-                            })
-                            .returning(User::as_returning())
-                            .get_result(&mut conn)?;
-                        generate_tokens(username_s, user.role.as_str())
-                    }
-                }
-            };
+    match token_request.grant_type {
+        GrantType::Password => handle_grant_flow_for_password(&mut conn, &token_request),
+        GrantType::AuthorizationCode | GrantType::ClientCredentials | GrantType::RefreshToken => {
+            Err(AuthError::BadRequest {
+                mime: mime::APPLICATION_JSON,
+                body: serde_json::json!({"error": "unimplemented"}).to_string(),
+            })
         }
     }
+}
 
-    Err(AuthError::BadRequest {
-        mime: mime::APPLICATION_JSON,
-        body: serde_json::json!({"error": "invalid_grant"}).to_string(),
-    })
+fn handle_grant_flow_for_password(
+    conn: &mut diesel::r2d2::PooledConnection<DbConnectionManager>,
+    token_request: &TokenRequest,
+) -> Result<actix_web::web::Json<Token>, AuthError> {
+    if let (Some(username_s), Some(password)) = (&token_request.username, &token_request.password) {
+        use crate::schema::users::dsl::*;
+
+        // Verify user credentials
+        let maybe_user: Option<User> = users
+            .find(username_s)
+            .select(User::as_select())
+            .first(conn)
+            .optional()?;
+
+        /*
+        hmm, this doesn't seem to have a `RETURNING` syntax:
+
+        diesel::insert_into(users)
+            .values(NewUser{username: username_s, password_hash: password})
+            .on_conflict(username)
+            .do_nothing()
+            .execute(&mut conn)?;
+        */
+
+        match maybe_user {
+            Some(user) => {
+                if Argon2::default()
+                    .verify_password(
+                        password.as_ref(),
+                        &argon2::PasswordHash::parse(
+                            user.password_hash.as_str(),
+                            argon2::password_hash::Encoding::default(),
+                        )?,
+                    )
+                    .is_ok()
+                {
+                    generate_tokens(username_s.as_str(), user.role.as_str())
+                } else {
+                    Err(AuthError::Unauthorised("User"))
+                }
+            }
+            None => {
+                if NO_PUBLIC_REGISTRATION {
+                    Err(AuthError::NotFound("User"))
+                } else {
+                    let salt = argon2::password_hash::SaltString::generate(
+                        &mut argon2::password_hash::rand_core::OsRng,
+                    );
+                    let gen_password_hash = Argon2::default()
+                        .hash_password(password.as_ref(), &salt)?
+                        .to_string();
+
+                    let user = diesel::insert_into(users)
+                        .values(&NewUser {
+                            username: username_s,
+                            password_hash: gen_password_hash.as_str(),
+                        })
+                        .returning(User::as_returning())
+                        .get_result(conn)?;
+                    generate_tokens(username_s, user.role.as_str())
+                }
+            }
+        }
+    } else {
+        Err(AuthError::BadRequest {
+            mime: mime::APPLICATION_JSON,
+            body: serde_json::json!({"error": "invalid_grant"}).to_string(),
+        })
+    }
 }

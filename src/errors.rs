@@ -129,14 +129,16 @@ impl actix_web::ResponseError for AuthError {
     }
 
     fn error_response(&self) -> actix_web::HttpResponse {
-        actix_web::HttpResponse::build(self.status_code()).json(serde_json::json!({
-        "error": "AuthError",
-        "error_message": if let AuthError::BadRequest { mime: _, body } = self {
-                format!("{}", body)
-            } else {
-                format!("{}", self)
-            }
-        }))
+        actix_web::HttpResponse::build(self.status_code()).json(serde_json::json!(
+            {
+                "error": "AuthError",
+                "error_message": if let AuthError::BadRequest { mime: _, body } = self {
+                        format!("{}", body)
+                    } else {
+                        format!("{}", self)
+                    }
+                }
+        ))
     }
 }
 

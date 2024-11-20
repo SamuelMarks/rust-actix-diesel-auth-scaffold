@@ -5,7 +5,7 @@ async fn test_read_token() {
     let app = crate::get_token_app!().await;
     let req = crate::tests::routes::token::helpers::test_token_api::post(
         crate::routes::token::TokenRequest {
-            grant_type: String::from("password"),
+            grant_type: crate::routes::token::GrantType::Password,
             username: Some(String::from(USERNAME)),
             password: Some(String::from(
                 crate::tests::routes::secret::helpers::PASSWORD,
