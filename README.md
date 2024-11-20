@@ -7,6 +7,112 @@ Simple baseline scaffold to get you started using actix + diesel with a custom O
 
 For example runnable server, see parent repository: https://github.com/SamuelMarks/serve-actix-diesel-auth-scaffold
 
+## Path Table
+
+| Method | Path | Description |
+| --- | --- | --- |
+| POST | [/api/token](#postapitoken) | Generate a token for a grant flow.
+Implements https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.3 |
+
+## Reference Table
+
+| Name | Path | Description |
+| --- | --- | --- |
+| GrantType | [#/components/schemas/GrantType](#componentsschemasgranttype) |  |
+| TokenRequest | [#/components/schemas/TokenRequest](#componentsschemastokenrequest) |  |
+| password | [#/components/securitySchemes/password](#componentssecurityschemespassword) |  |
+
+## Path Details
+
+***
+
+### [POST]/api/token
+
+- Summary  
+  Generate a token for a grant flow.  
+  Implements https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.3
+
+#### RequestBody
+
+- application/x-www-form-urlencoded
+
+```ts
+{
+  // optional client ID (as used, for example, in RFC6749's non password non refresh grant flow)
+  client_id?: string | null
+  // optional client secret (as used, e.g., in RFC6749's non (password|refresh) grant flow)
+  client_secret?: string | null
+  grant_type: enum[password, authorization_code, client_credentials, refresh_token, invalid]
+  // optional password (as used, for example, in RFC6749's password grant flow)
+  password?: string | null
+  // optional refresh token (as used, for example, in RFC6749's refresh grant flow)
+  refresh_token?: string | null
+  // optional username (as used, for example, in RFC6749's password grant flow)
+  username?: string | null
+}
+```
+
+#### Responses
+
+- 200 Token created
+
+- 400 Unauthorized User
+
+- 404 Not Found User
+
+- 500 Bad Request
+
+## References
+
+### #/components/schemas/GrantType
+
+```ts
+{
+  "type": "string",
+  "enum": [
+    "password",
+    "authorization_code",
+    "client_credentials",
+    "refresh_token",
+    "invalid"
+  ]
+}
+```
+
+### #/components/schemas/TokenRequest
+
+```ts
+{
+  // optional client ID (as used, for example, in RFC6749's non password non refresh grant flow)
+  client_id?: string | null
+  // optional client secret (as used, e.g., in RFC6749's non (password|refresh) grant flow)
+  client_secret?: string | null
+  grant_type: enum[password, authorization_code, client_credentials, refresh_token, invalid]
+  // optional password (as used, for example, in RFC6749's password grant flow)
+  password?: string | null
+  // optional refresh token (as used, for example, in RFC6749's refresh grant flow)
+  refresh_token?: string | null
+  // optional username (as used, for example, in RFC6749's password grant flow)
+  username?: string | null
+}
+```
+
+### #/components/securitySchemes/password
+
+```ts
+{
+  "type": "oauth2",
+  "flows": {
+    "password": {
+      "tokenUrl": "/api/token",
+      "scopes": {}
+    }
+  }
+}
+```
+
+---
+
 ## Docker usage
 
 Install Docker, and then run the following, which will run `cargo test` with Valkey and PostgreSQL from Docker:

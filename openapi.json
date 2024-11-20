@@ -1,0 +1,127 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "rust-actix-diesel-auth-scaffold",
+    "description": "Simple baseline scaffold to get you started using actix + diesel with a custom OAuth2 implementation.",
+    "license": {
+      "name": "Apache-2.0 OR MIT OR CC0",
+      "identifier": "Apache-2.0 OR MIT OR CC0"
+    },
+    "version": "0.0.1"
+  },
+  "paths": {
+    "/api/token": {
+      "post": {
+        "summary": "Generate a token for a grant flow.\nImplements https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.3",
+        "operationId": "token",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/TokenRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Token created"
+          },
+          "400": {
+            "description": "Unauthorized User"
+          },
+          "404": {
+            "description": "Not Found User"
+          },
+          "500": {
+            "description": "Bad Request"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "GrantType": {
+        "type": "string",
+        "enum": [
+          "password",
+          "authorization_code",
+          "client_credentials",
+          "refresh_token",
+          "invalid"
+        ]
+      },
+      "TokenRequest": {
+        "type": "object",
+        "required": [
+          "grant_type"
+        ],
+        "properties": {
+          "client_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "optional client ID (as used, for example, in RFC6749's non password non refresh grant flow)",
+            "example": null
+          },
+          "client_secret": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "optional client secret (as used, e.g., in RFC6749's non (password|refresh) grant flow)",
+            "example": null
+          },
+          "grant_type": {
+            "$ref": "#/components/schemas/GrantType",
+            "description": "RFC6749 grant type"
+          },
+          "password": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "optional password (as used, for example, in RFC6749's password grant flow)",
+            "example": "pass0"
+          },
+          "refresh_token": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "optional refresh token (as used, for example, in RFC6749's refresh grant flow)",
+            "example": null
+          },
+          "username": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "optional username (as used, for example, in RFC6749's password grant flow)",
+            "example": "user0"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "password": {
+        "type": "oauth2",
+        "flows": {
+          "password": {
+            "tokenUrl": "/api/token",
+            "scopes": {}
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "rust-actix-diesel-auth-scaffold",
+      "description": "Simple baseline scaffold to get you started using actix + diesel with a custom OAuth2 implementation."
+    }
+  ]
+}
