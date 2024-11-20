@@ -1,10 +1,9 @@
 #![feature(try_trait_v2)]
 
+use crate::tests::routes::token::helpers::test_token_api;
 use actix_web::body::MessageBody;
 use diesel::Connection;
 use diesel_migrations::MigrationHarness;
-
-use crate::tests::routes::token::helpers::test_token_api;
 
 pub mod errors;
 pub mod middleware;
@@ -32,6 +31,11 @@ lazy_static::lazy_static! {
 }
 
 pub async fn get_token(username_s: String, password_s: String) -> String {
+    let token = get_token_object(username_s, password_s).await;
+    token.access_token
+}
+
+pub async fn get_token_object(username_s: String, password_s: String) -> models::token::Token {
     db_init();
     let app = actix_web::test::init_service(
         actix_web::App::new()
@@ -47,17 +51,15 @@ pub async fn get_token(username_s: String, password_s: String) -> String {
     let resp = actix_web::test::call_service(&app, req).await;
     let status = resp.status();
     let resp_body_as_bytes = resp.into_body().try_into_bytes().unwrap();
-    /*
-    let resp_body_as_str = std::str::from_utf8(&resp_body_as_bytes).unwrap();
-    println!("resp_body_as_str = {:#?}", resp_body_as_str);
-    */
+    /* let resp_body_as_str = std::str::from_utf8(&resp_body_as_bytes).unwrap();
+    println!("resp_body_as_str = {:#?}", resp_body_as_str); */
     let resp_body_as_token: models::token::Token =
         serde_json::from_slice(&resp_body_as_bytes).unwrap();
     assert_eq!(status, actix_web::http::StatusCode::OK);
     assert!(resp_body_as_token.access_token.len() > 0);
     assert_eq!(resp_body_as_token.token_type, "Bearer");
     assert!(resp_body_as_token.expires_in > 0);
-    resp_body_as_token.access_token
+    resp_body_as_token
 }
 
 pub const MIGRATIONS: diesel_migrations::EmbeddedMigrations =

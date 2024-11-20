@@ -1,8 +1,12 @@
-#[derive(serde::Serialize, serde::Deserialize, utoipa::ToSchema, Debug)]
+#[derive(serde::Serialize, serde::Deserialize, utoipa::ToSchema, Debug, PartialEq)]
 pub struct Token {
     /// access token used for entry into protected endpoints
     #[schema(example = "username0::role1::access_token::1faf9af0-eac5-4066-b00d-e89e4a6b0b2e")]
     pub access_token: String,
+
+    /// access token used for entry into protected endpoints
+    #[schema(example = "username0::role1::refresh_token::1faf9af0-eac5-4066-b00d-e89e4a6b0b2e")]
+    pub refresh_token: String,
 
     /// token type, e.g., Bearer is provided in the Authorization HTTP header
     #[schema(example = "Bearer")]
