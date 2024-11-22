@@ -5,6 +5,7 @@ pub enum GrantType {
     AuthorizationCode,
     ClientCredentials,
     RefreshToken,
+    #[serde(skip)]
     Invalid,
 }
 
