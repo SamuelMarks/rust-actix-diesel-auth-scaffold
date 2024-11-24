@@ -71,6 +71,17 @@ pub enum AuthError {
 
     #[display("`argon2::Error` error. {error:?}")]
     Argon2Error { error: argon2::Error } = 753,
+
+    #[display("`base64::DecodeError` error. {error:?}")]
+    Base64Error { error: base64::DecodeError } = 754,
+
+    #[display("`actix_web::error::ParseError` error. {error:?}")]
+    ActixWebParseError { error: actix_web::error::ParseError } = 755,
+
+    #[display("`actix_web_httpauth::headers::authorization::ParseError` error. {error:?}")]
+    ActixWerbHttpAuthParseError {
+        error: actix_web_httpauth::headers::authorization::ParseError,
+    } = 756,
 }
 
 impl AuthError {

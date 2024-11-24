@@ -27,13 +27,21 @@ pub struct TokenRequest {
     #[schema(example = crate::option_default::<String>)]
     pub refresh_token: Option<String>,
 
-    /// optional client ID (as used, for example, in RFC6749's non password non refresh grant flow)
+    /// optional client ID (required, for example, in RFC6749's non password non refresh grant flow)
     #[schema(example = crate::option_default::<String>)]
     pub client_id: Option<String>,
 
     /// optional client secret (as used, e.g., in RFC6749's non (password|refresh) grant flow)
     #[schema(example = crate::option_default::<String>)]
     pub client_secret: Option<String>,
+
+    /// optional redirect_uri (used, e.g., in datatracker.ietf.org/doc/html/rfc6749#section-4.1.3)
+    #[schema(example = crate::option_default::<String>)]
+    pub redirect_uri: Option<String>,
+
+    /// optional code (required, e.g., in datatracker.ietf.org/doc/html/rfc6749#section-4.1.3)
+    #[schema(example = crate::option_default::<String>)]
+    pub code: Option<String>,
 }
 
 impl Default for TokenRequest {
@@ -45,6 +53,8 @@ impl Default for TokenRequest {
             refresh_token: None,
             client_id: None,
             client_secret: None,
+            redirect_uri: None,
+            code: None,
         }
     }
 }

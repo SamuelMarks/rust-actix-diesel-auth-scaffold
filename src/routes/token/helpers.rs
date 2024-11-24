@@ -1,6 +1,10 @@
+use actix_web_httpauth::headers::authorization::Scheme;
 use argon2::{PasswordHasher, PasswordVerifier};
+use base64::{prelude::BASE64_STANDARD, Engine};
 use diesel::{OptionalExtension, QueryDsl, RunQueryDsl, SelectableHelper};
+use http::HeaderValue;
 use redis::Commands;
+use std::borrow::Cow;
 
 use crate::errors::AuthError;
 use crate::models::token::Token;
@@ -40,69 +44,78 @@ fn generate_tokens(username_s: &str, role: &str) -> Result<actix_web::web::Json<
     }))
 }
 
+fn verify_or_insert_creds_and_get_role(
+    conn: &mut diesel::r2d2::PooledConnection<DbConnectionManager>,
+    username_s: &str,
+    password: &str,
+) -> Result<String, AuthError> {
+    use crate::schema::users::dsl::*;
+
+    // Verify user credentials
+    let maybe_user: Option<User> = users
+        .find(username_s)
+        .select(User::as_select())
+        .first(conn)
+        .optional()?;
+
+    /*
+    hmm, this doesn't seem to have a `RETURNING` syntax:
+
+    diesel::insert_into(users)
+        .values(NewUser{username: username_s, password_hash: password})
+        .on_conflict(username)
+        .do_nothing()
+        .execute(&mut conn)?;
+    */
+
+    match maybe_user {
+        Some(user) => {
+            if argon2::Argon2::default()
+                .verify_password(
+                    password.as_ref(),
+                    &argon2::PasswordHash::parse(
+                        user.password_hash.as_str(),
+                        argon2::password_hash::Encoding::default(),
+                    )?,
+                )
+                .is_ok()
+            {
+                Ok(user.role)
+            } else {
+                Err(AuthError::Unauthorised("User"))
+            }
+        }
+        None => {
+            if NO_PUBLIC_REGISTRATION {
+                Err(AuthError::NotFound("User"))
+            } else {
+                let salt = argon2::password_hash::SaltString::generate(
+                    &mut argon2::password_hash::rand_core::OsRng,
+                );
+                let gen_password_hash = argon2::Argon2::default()
+                    .hash_password(password.as_ref(), &salt)?
+                    .to_string();
+
+                let user = diesel::insert_into(users)
+                    .values(&NewUser {
+                        username: username_s,
+                        password_hash: gen_password_hash.as_str(),
+                    })
+                    .returning(User::as_returning())
+                    .get_result(conn)?;
+                Ok(user.role)
+            }
+        }
+    }
+}
+
 pub(crate) fn handle_grant_flow_for_password(
     conn: &mut diesel::r2d2::PooledConnection<DbConnectionManager>,
     token_request: &TokenRequest,
 ) -> Result<actix_web::web::Json<Token>, AuthError> {
     if let (Some(username_s), Some(password)) = (&token_request.username, &token_request.password) {
-        use crate::schema::users::dsl::*;
-
-        // Verify user credentials
-        let maybe_user: Option<User> = users
-            .find(username_s)
-            .select(User::as_select())
-            .first(conn)
-            .optional()?;
-
-        /*
-        hmm, this doesn't seem to have a `RETURNING` syntax:
-
-        diesel::insert_into(users)
-            .values(NewUser{username: username_s, password_hash: password})
-            .on_conflict(username)
-            .do_nothing()
-            .execute(&mut conn)?;
-        */
-
-        match maybe_user {
-            Some(user) => {
-                if argon2::Argon2::default()
-                    .verify_password(
-                        password.as_ref(),
-                        &argon2::PasswordHash::parse(
-                            user.password_hash.as_str(),
-                            argon2::password_hash::Encoding::default(),
-                        )?,
-                    )
-                    .is_ok()
-                {
-                    generate_tokens(username_s.as_str(), user.role.as_str())
-                } else {
-                    Err(AuthError::Unauthorised("User"))
-                }
-            }
-            None => {
-                if NO_PUBLIC_REGISTRATION {
-                    Err(AuthError::NotFound("User"))
-                } else {
-                    let salt = argon2::password_hash::SaltString::generate(
-                        &mut argon2::password_hash::rand_core::OsRng,
-                    );
-                    let gen_password_hash = argon2::Argon2::default()
-                        .hash_password(password.as_ref(), &salt)?
-                        .to_string();
-
-                    let user = diesel::insert_into(users)
-                        .values(&NewUser {
-                            username: username_s,
-                            password_hash: gen_password_hash.as_str(),
-                        })
-                        .returning(User::as_returning())
-                        .get_result(conn)?;
-                    generate_tokens(username_s, user.role.as_str())
-                }
-            }
-        }
+        let role = verify_or_insert_creds_and_get_role(conn, username_s, password)?;
+        generate_tokens(username_s, role.as_str())
     } else {
         Err(AuthError::BadRequest {
             mime: mime::APPLICATION_JSON,
@@ -156,4 +169,81 @@ pub(crate) fn handle_grant_flow_for_refresh_token(
             .to_string(),
         })
     }
+}
+
+// actix_web_httpauth::headers::authorization::Basic
+#[derive(derive_more::Debug)]
+pub struct Basic {
+    user_id: Cow<'static, str>,
+    password: Option<Cow<'static, str>>,
+}
+
+fn parse_authorization_basic(
+    header: &HeaderValue,
+) -> Result<Basic, actix_web_httpauth::headers::authorization::ParseError> {
+    // "Basic *" length
+    if header.len() < 7 {
+        return Err(actix_web_httpauth::headers::authorization::ParseError::Invalid);
+    }
+
+    let mut parts = header.to_str()?.splitn(2, ' ');
+    match parts.next() {
+        Some("Basic") => (),
+        _ => return Err(actix_web_httpauth::headers::authorization::ParseError::MissingScheme),
+    }
+
+    let decoded = BASE64_STANDARD.decode(
+        parts
+            .next()
+            .ok_or(actix_web_httpauth::headers::authorization::ParseError::Invalid)?,
+    )?;
+    let mut credentials = std::str::from_utf8(&decoded)?.splitn(2, ':');
+
+    let user_id = credentials
+        .next()
+        .ok_or(actix_web_httpauth::headers::authorization::ParseError::MissingField("user_id"))
+        .map(|user_id| user_id.to_string().into())?;
+
+    let password = credentials
+        .next()
+        .ok_or(actix_web_httpauth::headers::authorization::ParseError::MissingField("password"))
+        .map(|password| {
+            if password.is_empty() {
+                None
+            } else {
+                Some(password.to_string().into())
+            }
+        })?;
+
+    Ok(Basic { user_id, password })
+}
+
+pub(crate) fn handle_grant_flow_for_authorization_code(
+    conn: &mut diesel::r2d2::PooledConnection<DbConnectionManager>,
+    headers: &actix_http::header::HeaderMap,
+    token_request: TokenRequest,
+) -> Result<actix_web::web::Json<Token>, AuthError> {
+    if let TokenRequest {
+        client_id: Some(client_id),
+        redirect_uri: Some(redirect_uri),
+        code: Some(code),
+        ..
+    } = token_request
+    {
+        // TODO: check `client_id` is same that issued `code` and that `code` is valid
+        if let Some(authorization) = headers.get("Authorization") {
+            let basic = parse_authorization_basic(authorization)?;
+            if let Basic {
+                user_id: userid,
+                password: Some(password),
+            } = basic
+            {
+                let role = verify_or_insert_creds_and_get_role(conn, &userid, &password)?;
+                return generate_tokens(&userid, role.as_str());
+            }
+        }
+    }
+    Err(AuthError::Unauthorised(
+        "client_id, redirect_uri, code, basic authorization must be set",
+    ))
 }
