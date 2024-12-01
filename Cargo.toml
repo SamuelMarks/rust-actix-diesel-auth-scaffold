@@ -14,7 +14,6 @@ derive_more = { version = "^1", features = ["debug", "display", "error", "from",
 diesel = { version = "^2.2", features = ["postgres", "r2d2", "serde_json"] }
 diesel_migrations = { version = "^2.2", features = ["postgres"] }
 dotenvy = "^0.15"
-http = "^0.2"
 lazy_static = "^1.5"
 log = "^0.4"
 mime = "0.3.17"

@@ -1,3 +1,4 @@
-pub mod client;
+pub mod clients;
+pub mod users;
+
 pub mod token;
-pub mod user;

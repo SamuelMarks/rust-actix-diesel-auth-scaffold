@@ -118,7 +118,7 @@ const VALID_HTTP_CODES: [u16; 57] /*std::collections::HashSet<u16>*/ = [
 ];
 
 impl actix_web::ResponseError for AuthError {
-    fn status_code(&self) -> http::StatusCode {
+    fn status_code(&self) -> actix_web::http::StatusCode {
         let _status_code: u16 = {
             if let AuthError::ExitCode(exit_code) = self {
                 if exit_code == &std::process::ExitCode::SUCCESS {
@@ -136,7 +136,7 @@ impl actix_web::ResponseError for AuthError {
             }
         };
 
-        http::StatusCode::from_u16(_status_code).unwrap()
+        actix_web::http::StatusCode::from_u16(_status_code).unwrap()
     }
 
     fn error_response(&self) -> actix_web::HttpResponse {

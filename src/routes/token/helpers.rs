@@ -1,14 +1,11 @@
-use actix_web_httpauth::headers::authorization::Scheme;
 use argon2::{PasswordHasher, PasswordVerifier};
 use base64::{prelude::BASE64_STANDARD, Engine};
 use diesel::{OptionalExtension, QueryDsl, RunQueryDsl, SelectableHelper};
-use http::HeaderValue;
 use redis::Commands;
-use std::borrow::Cow;
 
 use crate::errors::AuthError;
 use crate::models::token::Token;
-use crate::models::user::{NewUser, User};
+use crate::models::users::{CreateUsers, Users};
 use crate::routes::token::types::{TokenRequest, NO_PUBLIC_REGISTRATION};
 use crate::DbConnectionManager;
 
@@ -52,11 +49,7 @@ fn verify_or_insert_creds_and_get_role(
     use crate::schema::users::dsl::*;
 
     // Verify user credentials
-    let maybe_user: Option<User> = users
-        .find(username_s)
-        .select(User::as_select())
-        .first(conn)
-        .optional()?;
+    let maybe_user: Option<Users> = users.find(username_s).first(conn).optional()?;
 
     /*
     hmm, this doesn't seem to have a `RETURNING` syntax:
@@ -97,11 +90,12 @@ fn verify_or_insert_creds_and_get_role(
                     .to_string();
 
                 let user = diesel::insert_into(users)
-                    .values(&NewUser {
-                        username: username_s,
-                        password_hash: gen_password_hash.as_str(),
+                    .values(&CreateUsers {
+                        username: String::from(username_s),
+                        password_hash: gen_password_hash,
+                        ..CreateUsers::default()
                     })
-                    .returning(User::as_returning())
+                    .returning(Users::as_returning())
                     .get_result(conn)?;
                 Ok(user.role)
             }
@@ -174,12 +168,12 @@ pub(crate) fn handle_grant_flow_for_refresh_token(
 // actix_web_httpauth::headers::authorization::Basic
 #[derive(derive_more::Debug)]
 pub struct Basic {
-    user_id: Cow<'static, str>,
-    password: Option<Cow<'static, str>>,
+    user_id: std::borrow::Cow<'static, str>,
+    password: Option<std::borrow::Cow<'static, str>>,
 }
 
 fn parse_authorization_basic(
-    header: &HeaderValue,
+    header: &actix_web::http::header::HeaderValue,
 ) -> Result<Basic, actix_web_httpauth::headers::authorization::ParseError> {
     // "Basic *" length
     if header.len() < 7 {
@@ -230,6 +224,10 @@ pub(crate) fn handle_grant_flow_for_authorization_code(
         ..
     } = token_request
     {
+        println!(
+            "TODO: check `{client_id}` is same that issued `{code}` and that `code` is valid \
+        and also that {redirect_uri} is valid and matches that that issued code"
+        );
         // TODO: check `client_id` is same that issued `code` and that `code` is valid
         if let Some(authorization) = headers.get("Authorization") {
             let basic = parse_authorization_basic(authorization)?;

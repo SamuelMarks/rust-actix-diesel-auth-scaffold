@@ -7,6 +7,11 @@ use diesel_migrations::MigrationHarness;
 
 pub mod errors;
 pub mod middleware;
+
+pub mod diesel {
+    pub use diesel::*;
+}
+
 pub mod models;
 pub mod routes;
 pub mod schema;

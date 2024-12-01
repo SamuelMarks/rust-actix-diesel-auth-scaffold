@@ -1,3 +1,7 @@
+use actix_http::header::Header;
+use actix_web::post;
+use actix_web_httpauth::headers::authorization::Basic;
+
 use crate::errors::AuthError;
 use crate::models::token::Token;
 use crate::routes::token::helpers::{
@@ -6,9 +10,6 @@ use crate::routes::token::helpers::{
 };
 use crate::routes::token::types::GrantType;
 use crate::routes::token::types::TokenRequest;
-use actix_http::header::{Header, TryIntoHeaderPair};
-use actix_web::post;
-use actix_web_httpauth::headers::authorization::Basic;
 
 /// Generate a token for a grant flow.
 /// Implements https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.3
