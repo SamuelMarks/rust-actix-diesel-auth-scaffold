@@ -10,8 +10,9 @@ actix-web = "^4"
 actix-web-httpauth = "^0.8"
 argon2 = "^0.5"
 base64 = "^0.22"
+chrono = { version = "0.4.38", features = ["serde"] }
 derive_more = { version = "^1", features = ["debug", "display", "error", "from", "from_str"] }
-diesel = { version = "^2.2", features = ["postgres", "r2d2", "serde_json"] }
+diesel = { version = "^2.2", features = ["postgres", "chrono", "r2d2", "serde_json"] }
 diesel_migrations = { version = "^2.2", features = ["postgres"] }
 dotenvy = "^0.15"
 lazy_static = "^1.5"

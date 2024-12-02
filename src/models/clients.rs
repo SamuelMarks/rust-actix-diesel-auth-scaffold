@@ -4,7 +4,7 @@
 use crate::diesel::*;
 use crate::schema::*;
 
-pub type ConnectionType = diesel::PgConnection; //diesel::pg::Pg;
+pub type ConnectionType = diesel::pg::PgConnection;
 
 /// Struct representing a row in table `clients`
 #[derive(
@@ -29,7 +29,7 @@ pub struct Clients {
     /// Field representing column `redirect_uri`
     pub redirect_uri: String,
     /// Field representing column `created_at`
-    pub created_at: std::time::SystemTime,
+    pub created_at: chrono::NaiveDateTime,
 }
 
 /// Create Struct for a row in table `clients` for [`Clients`]
@@ -67,7 +67,7 @@ pub struct UpdateClients {
     /// Field representing column `redirect_uri`
     pub redirect_uri: Option<String>,
     /// Field representing column `created_at`
-    pub created_at: Option<std::time::SystemTime>,
+    pub created_at: Option<chrono::NaiveDateTime>,
 }
 
 /// Result of a `.paginate` function
@@ -130,7 +130,7 @@ impl Default for Clients {
             client_id: String::new(),
             client_secret: String::new(),
             redirect_uri: String::new(),
-            created_at: std::time::SystemTime::now(),
+            created_at: Default::default(),
         }
     }
 }

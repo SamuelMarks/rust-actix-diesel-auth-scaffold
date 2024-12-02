@@ -4,7 +4,7 @@
 use crate::diesel::*;
 use crate::schema::*;
 
-pub type ConnectionType = diesel::pg::Pg;
+pub type ConnectionType = diesel::pg::PgConnection;
 
 /// Struct representing a row in table `users`
 #[derive(
@@ -27,7 +27,7 @@ pub struct Users {
     /// Field representing column `role`
     pub role: String,
     /// Field representing column `created_at`
-    pub created_at: std::time::SystemTime,
+    pub created_at: chrono::NaiveDateTime,
 }
 
 /// Create Struct for a row in table `users` for [`Users`]
@@ -63,7 +63,7 @@ pub struct UpdateUsers {
     /// Field representing column `role`
     pub role: Option<String>,
     /// Field representing column `created_at`
-    pub created_at: Option<std::time::SystemTime>,
+    pub created_at: Option<chrono::NaiveDateTime>,
 }
 
 /// Result of a `.paginate` function
@@ -82,7 +82,6 @@ pub struct PaginationResult<T> {
 }
 
 impl Users {
-    /*
     /// Insert a new row into `users` with a given [`CreateUsers`]
     pub fn create(db: &mut ConnectionType, item: &CreateUsers) -> diesel::QueryResult<Self> {
         use crate::schema::users::dsl::*;
@@ -91,18 +90,14 @@ impl Users {
             .values(item)
             .get_result::<Self>(db)
     }
-    */
 
-    /*
     /// Get a row from `users`, identified by the primary key
     pub fn read(db: &mut ConnectionType, param_username: String) -> diesel::QueryResult<Self> {
         use crate::schema::users::dsl::*;
 
         users.filter(username.eq(param_username)).first::<Self>(db)
     }
-    */
 
-    /*
     /// Update a row in `users`, identified by the primary key with [`UpdateUsers`]
     pub fn update(
         db: &mut ConnectionType,
@@ -115,16 +110,13 @@ impl Users {
             .set(item)
             .get_result(db)
     }
-    */
 
-    /*
     /// Delete a row in `users`, identified by the primary key
     pub fn delete(db: &mut ConnectionType, param_username: String) -> diesel::QueryResult<usize> {
         use crate::schema::users::dsl::*;
 
         diesel::delete(users.filter(username.eq(param_username))).execute(db)
     }
-    */
 }
 
 impl Default for Users {
@@ -133,7 +125,7 @@ impl Default for Users {
             username: String::new(),
             password_hash: String::new(),
             role: String::new(),
-            created_at: std::time::SystemTime::now(),
+            created_at: Default::default(),
         }
     }
 }
