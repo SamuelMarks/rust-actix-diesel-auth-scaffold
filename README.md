@@ -9,18 +9,18 @@ For example runnable server, see parent repository: https://github.com/SamuelMar
 
 ## Path Table
 
-| Method | Path | Description |
-| --- | --- | --- |
-| POST | [/api/token](#postapitoken) | Generate a token for a grant flow.
-Implements https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.3 |
+| Method                                                                 | Path                        | Description                        |
+|------------------------------------------------------------------------|-----------------------------|------------------------------------|
+| POST                                                                   | [/api/token](#postapitoken) | Generate a token for a grant flow. 
+ Implements https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.3 |
 
 ## Reference Table
 
-| Name | Path | Description |
-| --- | --- | --- |
-| GrantType | [#/components/schemas/GrantType](#componentsschemasgranttype) |  |
-| TokenRequest | [#/components/schemas/TokenRequest](#componentsschemastokenrequest) |  |
-| password | [#/components/securitySchemes/password](#componentssecurityschemespassword) |  |
+| Name         | Path                                                                        | Description |
+|--------------|-----------------------------------------------------------------------------|-------------|
+| GrantType    | [#/components/schemas/GrantType](#componentsschemasgranttype)               |             |
+| TokenRequest | [#/components/schemas/TokenRequest](#componentsschemastokenrequest)         |             |
+| password     | [#/components/securitySchemes/password](#componentssecurityschemespassword) |             |
 
 ## Path Details
 
@@ -116,11 +116,13 @@ Implements https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.3 |
 ## Docker usage
 
 Install Docker, and then run the following, which will run `cargo test` with Valkey and PostgreSQL from Docker:
+
 ```sh
 $ docker compose up
 ````
 
 NOTE: You may need to configure this for your architecture first, for example:
+
 ```sh
 $ docker compose build --build-arg ARCH_VARIANT='amd64' \
                        --build-arg ARCH='x86_64'
@@ -128,6 +130,7 @@ $ docker compose up
 ```
 
 Or to work with just one image and provide your own database and redis:
+
 ```sh
 $ docker build -f 'debian.Dockerfile' -t "${PWD##*/}"':latest' .
 $ docker run -e DATABASE_URL="$RDBMS_URI" \
@@ -141,6 +144,37 @@ $ docker run -e DATABASE_URL="$RDBMS_URI" \
 
 Install Rust, `git`, and ensure you have your PostgreSQL and Redis/Valkey services setup.
 
+### PostgreSQL
+
+One way to install PostgreSQL is with my cross-platform https://github.com/SamuelMarks/libscript:
+
+```sh
+$ [ -d /tmp/libscript ] || git clone --depth=1 --single-branch https://github.com/SamuelMarks/libscript /tmp/libscript
+$ env -i HOME="$HOME" \
+         PATH="$PATH" \
+         POSTGRES_USER='rest_user' \
+         POSTGRES_SERVICE_PASSWORD='addGoodPasswordhere' \
+         POSTGRES_PASSWORD='rest_pass' \
+         POSTGRES_HOST='localhost' \
+         POSTGRES_DB='rest_db' \
+         '/tmp/libscript/_lib/_storage/postgres/setup.sh'
+```
+
+(on Windows use `set` and `libscript\_lib\_storage\postgres\setup.cmd`)
+
+### Valkey (Redis-compatible)
+
+One way to install the Redis-compatible Valkey is with my cross-platform https://github.com/SamuelMarks/libscript:
+
+```sh
+$ [ -d libscript ] || git clone --depth=1 --single-branch https://github.com/SamuelMarks/libscript
+$ env -i HOME="$HOME" \
+         PATH="$PATH" \
+         "$(pwd)"'/libscript/_lib/_storage/valkey/setup.sh'
+```
+
+(on Windows use Garnet: https://github.com/microsoft/garnet)
+
 ### Environment setup
 
 Add an `.env` file or otherwise add these environment variables; replacing connection strings with what you use:
@@ -150,7 +184,10 @@ Add an `.env` file or otherwise add these environment variables; replacing conne
 
 ### Main entrypoint
 
-In your own project, add dependencies to your Cargo.toml with `cargo add --git https://github.com/SamuelMarks/rust-actix-diesel-auth-scaffold` or by manually editing your `Cargo.toml` like so:
+In your own project, add dependencies to your Cargo.toml with
+`cargo add --git https://github.com/SamuelMarks/rust-actix-diesel-auth-scaffold` or by manually editing your
+`Cargo.toml` like so:
+
 ```toml
 [dependencies]
 rust-actix-diesel-auth-scaffold = { git = "https://github.com/SamuelMarks/rust-actix-diesel-auth-scaffold", version = "0.0.1" }
@@ -163,18 +200,23 @@ Then write a `main.rs` like: https://github.com/SamuelMarks/serve-actix-diesel-a
     cargo test
 
 ## Contribution guide
-Ensure all tests are passing [`cargo test`](https://doc.rust-lang.org/cargo/commands/cargo-test.html) and [`rustfmt`](https://github.com/rust-lang/rustfmt) has been run. This can be with [`cargo make`](https://github.com/sagiegurari/cargo-make); installable with:
+
+Ensure all tests are passing [`cargo test`](https://doc.rust-lang.org/cargo/commands/cargo-test.html) and [
+`rustfmt`](https://github.com/rust-lang/rustfmt) has been run. This can be with [
+`cargo make`](https://github.com/sagiegurari/cargo-make); installable with:
 
 ```sh
 $ cargo install --force cargo-make
 ```
 
 Then run:
+
 ```sh
 $ cargo make
 ```
 
-Finally, we recommend [feature-branches](https://martinfowler.com/bliki/FeatureBranch.html) with an accompanying [pull-request](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/about-pull-requests).
+Finally, we recommend [feature-branches](https://martinfowler.com/bliki/FeatureBranch.html) with an
+accompanying [pull-request](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/about-pull-requests).
 </small>
 
 <hr/>

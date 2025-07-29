@@ -1,3 +1,4 @@
+use actix_web::mime;
 use argon2::{PasswordHasher, PasswordVerifier};
 use base64::{prelude::BASE64_STANDARD, Engine};
 use diesel::{OptionalExtension, QueryDsl, RunQueryDsl, SelectableHelper};
@@ -82,9 +83,9 @@ fn verify_or_insert_creds_and_get_role(
             if NO_PUBLIC_REGISTRATION {
                 Err(AuthError::NotFound("User"))
             } else {
-                let salt = argon2::password_hash::SaltString::generate(
+                let salt = argon2::password_hash::SaltString::try_from_rng(
                     &mut argon2::password_hash::rand_core::OsRng,
-                );
+                )?;
                 let gen_password_hash = argon2::Argon2::default()
                     .hash_password(password.as_ref(), &salt)?
                     .to_string();

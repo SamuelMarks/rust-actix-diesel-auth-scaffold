@@ -1,5 +1,5 @@
 use actix_http::header::Header;
-use actix_web::post;
+use actix_web::{mime, post};
 use actix_web_httpauth::headers::authorization::Basic;
 
 use crate::errors::AuthError;

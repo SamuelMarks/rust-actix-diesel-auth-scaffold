@@ -1,5 +1,8 @@
 use std::string::ToString;
 
+use actix_web::mime;
+use argon2::password_hash::rand_core;
+
 #[derive(derive_more::Display, derive_more::Error, derive_more::From, Debug)]
 #[repr(u16)]
 pub enum AuthError {
@@ -51,6 +54,9 @@ pub enum AuthError {
     #[error(ignore)]
     #[display("{_0:?}")]
     ExitCode(std::process::ExitCode) = 710,
+
+    #[display("{_0:?}")]
+    RandError(rand_core::OsError) = 720,
 
     #[display("`serde_json::Error` error. {error:?}")]
     SerdeJsonError { error: serde_json::Error } = 721,
