@@ -22,7 +22,7 @@ RUN apt update -qq && \
 
 ARG ARCH=aarch64
 ARG ARCH_VARIANT=arm64
-ADD https://github.com/atkrad/wait4x/releases/download/v2.14.2/wait4x-linux-${ARCH_VARIANT}.tar.gz /tmp/dls/
+ADD https://github.com/atkrad/wait4x/releases/download/v3.5.1/wait4x-linux-${ARCH_VARIANT}.tar.gz /tmp/dls/
 RUN tar xf /tmp/dls/wait4x-linux-${ARCH_VARIANT}.tar.gz -C /usr/local/bin/ wait4x
 
 WORKDIR /app
