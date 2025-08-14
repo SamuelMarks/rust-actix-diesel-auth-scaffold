@@ -7,6 +7,25 @@ Simple baseline scaffold to get you started using actix + diesel with a custom O
 
 For example runnable server, see parent repository: https://github.com/SamuelMarks/serve-actix-diesel-auth-scaffold
 
+## OAuth2 supported flows
+
+| Grant Flow                            | Supported |
+|---------------------------------------|:---------:|
+| Resource Owner Password Credentials   | ✅        |
+| Authorization Code                    | ⚠️*      |
+| Client Credentials                    | ❌        |
+| Refresh Token                         | ✅        |
+| Implicit                              | ❌        |
+
+## Roadmap
+
+- [] Make redis optional hidden behind feature (make it default on)
+- [] Add more tests
+- [] Hide each grant flow behind features
+- [] Add grant flow Authorization Code
+- [] Add grant flow Client Credentials
+- [] Add grant flow Implicit
+
 ## Path Table
 
 | Method                                                                 | Path                        | Description                        |
