@@ -19,12 +19,12 @@ For example runnable server, see parent repository: https://github.com/SamuelMar
 
 ## Roadmap
 
-- [] Make redis optional hidden behind feature (make it default on)
-- [] Add more tests
-- [] Hide each grant flow behind features
-- [] Add grant flow Authorization Code
-- [] Add grant flow Client Credentials
-- [] Add grant flow Implicit
+- [ ] Make redis optional hidden behind feature (make it default on)
+- [ ] Add more tests
+- [ ] Hide each grant flow behind features
+- [ ] Add grant flow Authorization Code
+- [ ] Add grant flow Client Credentials
+- [ ] Add grant flow Implicit
 
 ## Path Table
 
