@@ -47,7 +47,7 @@ impl Default for CreateUsers {
         Self {
             username: String::new(),
             password_hash: String::new(),
-            role: String::new(),
+            role: String::from("regular"),
         }
     }
 }
