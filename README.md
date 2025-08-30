@@ -215,8 +215,9 @@ rust-actix-diesel-auth-scaffold = { git = "https://github.com/SamuelMarks/rust-a
 Then write a `main.rs` like: https://github.com/SamuelMarks/serve-actix-diesel-auth-scaffold/blob/master/src/main.rs
 
 ### Test
-
-    cargo test
+```sh
+$ cargo test
+```
 
 ## Contribution guide
 
