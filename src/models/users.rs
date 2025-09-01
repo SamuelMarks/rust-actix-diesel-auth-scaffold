@@ -22,8 +22,6 @@ pub type ConnectionType = diesel::pg::PgConnection;
 pub struct Users {
     /// Field representing column `username`
     pub username: String,
-    /// Field representing column `alt_id0`
-    pub alt_id0: String,
     /// Field representing column `password_hash`
     pub password_hash: String,
     /// Field representing column `role`
@@ -38,8 +36,6 @@ pub struct Users {
 pub struct CreateUsers {
     /// Field representing column `username`
     pub username: String,
-    /// Field representing column `alt_id0`
-    pub alt_id0: String,
     /// Field representing column `password_hash`
     pub password_hash: String,
     /// Field representing column `role`
@@ -50,7 +46,6 @@ impl Default for CreateUsers {
     fn default() -> Self {
         Self {
             username: String::new(),
-            alt_id0: String::new(),
             password_hash: String::new(),
             role: String::from("regular"),
         }
@@ -63,8 +58,6 @@ impl Default for CreateUsers {
 )]
 #[diesel(table_name=users)]
 pub struct UpdateUsers {
-    /// Field representing column `alt_id0`
-    pub alt_id0: String,
     /// Field representing column `password_hash`
     pub password_hash: Option<String>,
     /// Field representing column `role`
@@ -130,7 +123,6 @@ impl Default for Users {
     fn default() -> Self {
         Self {
             username: String::new(),
-            alt_id0: String::new(),
             password_hash: String::new(),
             role: String::new(),
             created_at: Default::default(),
