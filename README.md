@@ -7,15 +7,18 @@ Simple baseline scaffold to get you started using actix + diesel with a custom O
 
 For example runnable server, see repository: https://github.com/SamuelMarks/serve-actix-diesel-auth-scaffold
 
+For example repo that builds a domain-specific REST API + models depending on this, see
+repository: https://github.com/crawlcomply/crawlcomply-backend
+
 ## OAuth2 supported flows
 
-| Grant Flow                            | Supported |
-|---------------------------------------|:---------:|
-| Resource Owner Password Credentials   | ✅        |
-| Authorization Code                    | ⚠️*      |
-| Client Credentials                    | ❌        |
-| Refresh Token                         | ✅        |
-| Implicit                              | ❌        |
+| Grant Flow                          | Supported |
+|-------------------------------------|:---------:|
+| Resource Owner Password Credentials |     ✅     |
+| Authorization Code                  |    ⚠️*    |
+| Client Credentials                  |     ❌     |
+| Refresh Token                       |     ✅     |
+| Implicit                            |     ❌     |
 
 ## Roadmap
 
@@ -57,17 +60,18 @@ For example runnable server, see repository: https://github.com/SamuelMarks/serv
 
 ```ts
 {
-  // optional client ID (as used, for example, in RFC6749's non password non refresh grant flow)
-  client_id?: string | null
-  // optional client secret (as used, e.g., in RFC6749's non (password|refresh) grant flow)
-  client_secret?: string | null
-  grant_type: enum[password, authorization_code, client_credentials, refresh_token, invalid]
-  // optional password (as used, for example, in RFC6749's password grant flow)
-  password?: string | null
-  // optional refresh token (as used, for example, in RFC6749's refresh grant flow)
-  refresh_token?: string | null
-  // optional username (as used, for example, in RFC6749's password grant flow)
-  username?: string | null
+    // optional client ID (as used, for example, in RFC6749's non password non refresh grant flow)
+    client_id ? : string | null
+    // optional client secret (as used, e.g., in RFC6749's non (password|refresh) grant flow)
+    client_secret ? : string | null
+    grant_type: enum
+    [password, authorization_code, client_credentials, refresh_token, invalid]
+    // optional password (as used, for example, in RFC6749's password grant flow)
+    password ? : string | null
+    // optional refresh token (as used, for example, in RFC6749's refresh grant flow)
+    refresh_token ? : string | null
+    // optional username (as used, for example, in RFC6749's password grant flow)
+    username ? : string | null
 }
 ```
 
@@ -87,14 +91,18 @@ For example runnable server, see repository: https://github.com/SamuelMarks/serv
 
 ```ts
 {
-  "type": "string",
-  "enum": [
-    "password",
-    "authorization_code",
-    "client_credentials",
-    "refresh_token",
-    "invalid"
-  ]
+    "type"
+:
+    "string",
+        "enum"
+:
+    [
+        "password",
+        "authorization_code",
+        "client_credentials",
+        "refresh_token",
+        "invalid"
+    ]
 }
 ```
 
@@ -102,17 +110,18 @@ For example runnable server, see repository: https://github.com/SamuelMarks/serv
 
 ```ts
 {
-  // optional client ID (as used, for example, in RFC6749's non password non refresh grant flow)
-  client_id?: string | null
-  // optional client secret (as used, e.g., in RFC6749's non (password|refresh) grant flow)
-  client_secret?: string | null
-  grant_type: enum[password, authorization_code, client_credentials, refresh_token, invalid]
-  // optional password (as used, for example, in RFC6749's password grant flow)
-  password?: string | null
-  // optional refresh token (as used, for example, in RFC6749's refresh grant flow)
-  refresh_token?: string | null
-  // optional username (as used, for example, in RFC6749's password grant flow)
-  username?: string | null
+    // optional client ID (as used, for example, in RFC6749's non password non refresh grant flow)
+    client_id ? : string | null
+    // optional client secret (as used, e.g., in RFC6749's non (password|refresh) grant flow)
+    client_secret ? : string | null
+    grant_type: enum
+    [password, authorization_code, client_credentials, refresh_token, invalid]
+    // optional password (as used, for example, in RFC6749's password grant flow)
+    password ? : string | null
+    // optional refresh token (as used, for example, in RFC6749's refresh grant flow)
+    refresh_token ? : string | null
+    // optional username (as used, for example, in RFC6749's password grant flow)
+    username ? : string | null
 }
 ```
 
@@ -120,13 +129,24 @@ For example runnable server, see repository: https://github.com/SamuelMarks/serv
 
 ```ts
 {
-  "type": "oauth2",
-  "flows": {
-    "password": {
-      "tokenUrl": "/api/token",
-      "scopes": {}
+    "type"
+:
+    "oauth2",
+        "flows"
+:
+    {
+        "password"
+    :
+        {
+            "tokenUrl"
+        :
+            "/api/token",
+                "scopes"
+        :
+            {
+            }
+        }
     }
-  }
 }
 ```
 
@@ -215,6 +235,7 @@ rust-actix-diesel-auth-scaffold = { git = "https://github.com/SamuelMarks/rust-a
 Then write a `main.rs` like: https://github.com/SamuelMarks/serve-actix-diesel-auth-scaffold/blob/master/src/main.rs
 
 ### Test
+
 ```sh
 $ cargo test
 ```
