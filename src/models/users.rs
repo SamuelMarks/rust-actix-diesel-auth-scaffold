@@ -8,6 +8,7 @@ pub type ConnectionType = diesel::pg::PgConnection;
 
 /// Struct representing a row in table `users`
 #[derive(
+    utoipa::ToSchema,
     Debug,
     Clone,
     serde::Serialize,
@@ -31,7 +32,9 @@ pub struct Users {
 }
 
 /// Create Struct for a row in table `users` for [`Users`]
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, diesel::Insertable)]
+#[derive(
+    utoipa::ToSchema, Debug, Clone, serde::Serialize, serde::Deserialize, diesel::Insertable,
+)]
 #[diesel(table_name=users)]
 pub struct CreateUsers {
     /// Field representing column `username`
@@ -47,14 +50,21 @@ impl Default for CreateUsers {
         Self {
             username: String::new(),
             password_hash: String::new(),
-            role: String::from("regular"),
+            role: String::new(),
         }
     }
 }
 
 /// Update Struct for a row in table `users` for [`Users`]
 #[derive(
-    Debug, Clone, serde::Serialize, serde::Deserialize, diesel::AsChangeset, PartialEq, Default,
+    utoipa::ToSchema,
+    Debug,
+    Clone,
+    serde::Serialize,
+    serde::Deserialize,
+    diesel::AsChangeset,
+    PartialEq,
+    Default,
 )]
 #[diesel(table_name=users)]
 pub struct UpdateUsers {

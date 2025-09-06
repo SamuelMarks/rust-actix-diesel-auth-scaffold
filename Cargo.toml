@@ -21,5 +21,5 @@ redis = { version = "^0.27", features = ["aio", "async-std-comp", "script"] }
 serde = { version = "^1", features = ["derive"] }
 serde_json = "^1"
 strum_macros = "^0.27"
-utoipa = { version = "^5.4", features = ["actix_extras"] }
+utoipa = { git = "https://github.com/SamuelMarks/utoipa", branch = "bigdecimal", version = "^5.4", features = ["actix_extras", "bigdecimal", "chrono"] }
 uuid = { version = "^1.17", features = ["v4"] }

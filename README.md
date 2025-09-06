@@ -60,18 +60,17 @@ repository: https://github.com/crawlcomply/crawlcomply-backend
 
 ```ts
 {
-    // optional client ID (as used, for example, in RFC6749's non password non refresh grant flow)
-    client_id ? : string | null
-    // optional client secret (as used, e.g., in RFC6749's non (password|refresh) grant flow)
-    client_secret ? : string | null
-    grant_type: enum
-    [password, authorization_code, client_credentials, refresh_token, invalid]
-    // optional password (as used, for example, in RFC6749's password grant flow)
-    password ? : string | null
-    // optional refresh token (as used, for example, in RFC6749's refresh grant flow)
-    refresh_token ? : string | null
-    // optional username (as used, for example, in RFC6749's password grant flow)
-    username ? : string | null
+  // optional client ID (as used, for example, in RFC6749's non password non refresh grant flow)
+  client_id?: string | null
+  // optional client secret (as used, e.g., in RFC6749's non (password|refresh) grant flow)
+  client_secret?: string | null
+  grant_type: enum[password, authorization_code, client_credentials, refresh_token, invalid]
+  // optional password (as used, for example, in RFC6749's password grant flow)
+  password?: string | null
+  // optional refresh token (as used, for example, in RFC6749's refresh grant flow)
+  refresh_token?: string | null
+  // optional username (as used, for example, in RFC6749's password grant flow)
+  username?: string | null
 }
 ```
 
@@ -89,14 +88,10 @@ repository: https://github.com/crawlcomply/crawlcomply-backend
 
 ### #/components/schemas/GrantType
 
-```ts
+```json
 {
-    "type"
-:
-    "string",
-        "enum"
-:
-    [
+    "type": "string",
+    "enum": [
         "password",
         "authorization_code",
         "client_credentials",
@@ -111,42 +106,30 @@ repository: https://github.com/crawlcomply/crawlcomply-backend
 ```ts
 {
     // optional client ID (as used, for example, in RFC6749's non password non refresh grant flow)
-    client_id ? : string | null
+    client_id?: string | null
     // optional client secret (as used, e.g., in RFC6749's non (password|refresh) grant flow)
-    client_secret ? : string | null
-    grant_type: enum
-    [password, authorization_code, client_credentials, refresh_token, invalid]
+    client_secret?: string | null
+    grant_type: enum[password, authorization_code, client_credentials, refresh_token, invalid]
     // optional password (as used, for example, in RFC6749's password grant flow)
-    password ? : string | null
+    password?: string | null
     // optional refresh token (as used, for example, in RFC6749's refresh grant flow)
-    refresh_token ? : string | null
+    refresh_token?: string | null
     // optional username (as used, for example, in RFC6749's password grant flow)
-    username ? : string | null
+    username?: string | null
 }
 ```
 
 ### #/components/securitySchemes/password
 
-```ts
+```json
 {
-    "type"
-:
-    "oauth2",
-        "flows"
-:
-    {
-        "password"
-    :
-        {
-            "tokenUrl"
-        :
-            "/api/token",
-                "scopes"
-        :
-            {
-            }
-        }
+  "type": "oauth2",
+  "flows": {
+    "password": {
+      "tokenUrl": "/api/token",
+      "scopes": {}
     }
+  }
 }
 ```
 
@@ -238,6 +221,61 @@ Then write a `main.rs` like: https://github.com/SamuelMarks/serve-actix-diesel-a
 
 ```sh
 $ cargo test
+```
+
+---
+
+## Development guide
+
+### Diesel
+
+[Diesel](https://diesel.rs) is the most popular Rust database abstraction for PostgreSQL, MySQL, and SQLite.
+
+Most of this guide is taken from https://diesel.rs/guides/getting-started @ [
+`6fbfd94`](https://github.com/sgrif/diesel.rs-website/blob/6fbfd94/src/guides/getting-started.md).
+
+#### Dependencies
+
+```sh
+$ cargo install --force cargo-binstall
+$ cargo binstall diesel_cli
+$ printf '%s\n' \
+  DATABASE_URL='postgres://rest_user:rest_pass@localhost/rest_db' \
+  REDIS_URL='redis://127.0.0.1/' > .env
+```
+
+##### Initial setup
+
+If no migrations directory exists, run:
+
+```sh
+$ diesel setup
+```
+
+#### Migrations (e.g., new table)
+
+```sh
+$ diesel migration generate create_profile
+```
+
+#### Run migrations
+
+```sh
+$ diesel migration run
+```
+
+#### Test that rollback works
+
+```sh
+$ diesel migration redo
+```
+
+#### Generate associated `struct`s (like the `class` ORMs of other languages)
+
+```sh
+$ cargo install --git https://github.com/SamuelMarks/dsync --branch default-and-derive
+$ dsync -c 'diesel::pg::PgConnection' -d 'utoipa::ToSchema' -i 'src/schema.rs' -o 'src/models' \
+        -g 'created_at' -g 'updated_at' --single-model-file --default-impl
 ```
 
 ## Contribution guide
