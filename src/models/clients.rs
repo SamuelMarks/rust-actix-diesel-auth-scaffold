@@ -8,7 +8,6 @@ pub type ConnectionType = diesel::pg::PgConnection;
 
 /// Struct representing a row in table `clients`
 #[derive(
-    utoipa::ToSchema,
     Debug,
     Clone,
     serde::Serialize,
@@ -33,10 +32,20 @@ pub struct Clients {
     pub created_at: chrono::NaiveDateTime,
 }
 
+impl Default for Clients {
+    fn default() -> Self {
+        Self {
+            id: 0,
+            client_id: String::new(),
+            client_secret: String::new(),
+            redirect_uri: String::new(),
+            created_at: Default::default(),
+        }
+    }
+}
+
 /// Create Struct for a row in table `clients` for [`Clients`]
-#[derive(
-    utoipa::ToSchema, Debug, Clone, serde::Serialize, serde::Deserialize, diesel::Insertable,
-)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, diesel::Insertable)]
 #[diesel(table_name=clients)]
 pub struct CreateClients {
     /// Field representing column `id`
@@ -61,16 +70,7 @@ impl Default for CreateClients {
 }
 
 /// Update Struct for a row in table `clients` for [`Clients`]
-#[derive(
-    utoipa::ToSchema,
-    Debug,
-    Clone,
-    serde::Serialize,
-    serde::Deserialize,
-    diesel::AsChangeset,
-    PartialEq,
-    Default,
-)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, diesel::AsChangeset, PartialEq)]
 #[diesel(table_name=clients)]
 pub struct UpdateClients {
     /// Field representing column `client_id`
@@ -81,6 +81,17 @@ pub struct UpdateClients {
     pub redirect_uri: Option<String>,
     /// Field representing column `created_at`
     pub created_at: Option<chrono::NaiveDateTime>,
+}
+
+impl Default for UpdateClients {
+    fn default() -> Self {
+        Self {
+            client_id: None,
+            client_secret: None,
+            redirect_uri: None,
+            created_at: None,
+        }
+    }
 }
 
 /// Result of a `.paginate` function
@@ -133,17 +144,5 @@ impl Clients {
         use crate::schema::clients::dsl::*;
 
         diesel::delete(clients.filter(id.eq(param_id))).execute(db)
-    }
-}
-
-impl Default for Clients {
-    fn default() -> Self {
-        Self {
-            id: 0,
-            client_id: String::new(),
-            client_secret: String::new(),
-            redirect_uri: String::new(),
-            created_at: Default::default(),
-        }
     }
 }

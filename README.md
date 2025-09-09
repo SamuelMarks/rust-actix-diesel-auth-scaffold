@@ -33,8 +33,8 @@ repository: https://github.com/crawlcomply/crawlcomply-backend
 
 | Method                                                                 | Path                        | Description                        |
 |------------------------------------------------------------------------|-----------------------------|------------------------------------|
-| POST                                                                   | [/api/token](#postapitoken) | Generate a token for a grant flow. 
- Implements https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.3 |
+| POST                                                                   | [/api/token](#postapitoken) | Generate a token for a grant flow. |
+| Implements https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.3 |                             |                                    |
 
 ## Reference Table
 
@@ -116,14 +116,15 @@ repository: https://github.com/crawlcomply/crawlcomply-backend
 
 ```json
 {
-    "type": "string",
-    "enum": [
-        "password",
-        "authorization_code",
-        "client_credentials",
-        "refresh_token",
-        "invalid"
-    ]
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "string",
+  "enum": [
+    "password",
+    "authorization_code",
+    "client_credentials",
+    "refresh_token",
+    "invalid"
+  ]
 }
 ```
 

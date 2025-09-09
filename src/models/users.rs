@@ -8,7 +8,6 @@ pub type ConnectionType = diesel::pg::PgConnection;
 
 /// Struct representing a row in table `users`
 #[derive(
-    utoipa::ToSchema,
     Debug,
     Clone,
     serde::Serialize,
@@ -31,10 +30,19 @@ pub struct Users {
     pub created_at: chrono::NaiveDateTime,
 }
 
+impl Default for Users {
+    fn default() -> Self {
+        Self {
+            username: String::new(),
+            password_hash: String::new(),
+            role: String::new(),
+            created_at: Default::default(),
+        }
+    }
+}
+
 /// Create Struct for a row in table `users` for [`Users`]
-#[derive(
-    utoipa::ToSchema, Debug, Clone, serde::Serialize, serde::Deserialize, diesel::Insertable,
-)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, diesel::Insertable)]
 #[diesel(table_name=users)]
 pub struct CreateUsers {
     /// Field representing column `username`
@@ -56,16 +64,7 @@ impl Default for CreateUsers {
 }
 
 /// Update Struct for a row in table `users` for [`Users`]
-#[derive(
-    utoipa::ToSchema,
-    Debug,
-    Clone,
-    serde::Serialize,
-    serde::Deserialize,
-    diesel::AsChangeset,
-    PartialEq,
-    Default,
-)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, diesel::AsChangeset, PartialEq)]
 #[diesel(table_name=users)]
 pub struct UpdateUsers {
     /// Field representing column `password_hash`
@@ -74,6 +73,16 @@ pub struct UpdateUsers {
     pub role: Option<String>,
     /// Field representing column `created_at`
     pub created_at: Option<chrono::NaiveDateTime>,
+}
+
+impl Default for UpdateUsers {
+    fn default() -> Self {
+        Self {
+            password_hash: None,
+            role: None,
+            created_at: None,
+        }
+    }
 }
 
 /// Result of a `.paginate` function
@@ -126,16 +135,5 @@ impl Users {
         use crate::schema::users::dsl::*;
 
         diesel::delete(users.filter(username.eq(param_username))).execute(db)
-    }
-}
-
-impl Default for Users {
-    fn default() -> Self {
-        Self {
-            username: String::new(),
-            password_hash: String::new(),
-            role: String::new(),
-            created_at: Default::default(),
-        }
     }
 }
