@@ -1,4 +1,5 @@
 #![feature(try_trait_v2)]
+extern crate alloc;
 
 use crate::tests::routes::token::helpers::test_token_api;
 use actix_web::body::MessageBody;

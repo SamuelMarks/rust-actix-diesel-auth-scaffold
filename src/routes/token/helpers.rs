@@ -1,6 +1,8 @@
 use actix_web::mime;
+use alloc::string::String;
 use argon2::{PasswordHasher, PasswordVerifier};
 use base64::{prelude::BASE64_STANDARD, Engine};
+use core::iter::Iterator;
 use diesel::{OptionalExtension, QueryDsl, RunQueryDsl, SelectableHelper};
 use redis::Commands;
 
@@ -211,6 +213,41 @@ fn parse_authorization_basic(
         })?;
 
     Ok(Basic { user_id, password })
+}
+
+#[derive(Debug, PartialEq)]
+pub struct UsernameTypeRoleUniq {
+    /// username, often the email or userid
+    pub username: String,
+    /// token type, e.g., "refresh_token" or "access_token"
+    pub token_type: String,
+    /// role, e.g., "admin" or "regular"
+    pub role: String,
+    /// uniq part, probably UUID
+    pub uniq: String,
+}
+
+pub fn parse_bearer_token(bearer_token: &str) -> Result<UsernameTypeRoleUniq, AuthError> {
+    let mut split = bearer_token.splitn(4, "::");
+    match (split.next(), split.next(), split.next(), split.next()) {
+        (Some(username), Some(role), Some(token_type), Some(uniq)) => {
+            println!("✅ Parsed successfully:");
+            println!("Username: {}", username);
+            println!("Role: {}", role);
+            println!("Token Type: {}", token_type);
+            println!("Unique ID: {}", uniq);
+            Ok(UsernameTypeRoleUniq {
+                username: username.to_string(),
+                token_type: token_type.to_string(),
+                role: role.to_string(),
+                uniq: uniq.to_string(),
+            })
+        }
+        _ => Err(AuthError::BadRequest {
+            mime: mime::APPLICATION_JSON,
+            body: String::from("Expected exactly 4 ::-separated parts."),
+        }),
+    }
 }
 
 pub(crate) fn handle_grant_flow_for_authorization_code(
