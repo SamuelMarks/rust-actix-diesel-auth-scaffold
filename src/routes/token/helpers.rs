@@ -230,19 +230,12 @@ pub struct UsernameTypeRoleUniq {
 pub fn parse_bearer_token(bearer_token: &str) -> Result<UsernameTypeRoleUniq, AuthError> {
     let mut split = bearer_token.splitn(4, "::");
     match (split.next(), split.next(), split.next(), split.next()) {
-        (Some(username), Some(role), Some(token_type), Some(uniq)) => {
-            println!("✅ Parsed successfully:");
-            println!("Username: {}", username);
-            println!("Role: {}", role);
-            println!("Token Type: {}", token_type);
-            println!("Unique ID: {}", uniq);
-            Ok(UsernameTypeRoleUniq {
-                username: username.to_string(),
-                token_type: token_type.to_string(),
-                role: role.to_string(),
-                uniq: uniq.to_string(),
-            })
-        }
+        (Some(username), Some(role), Some(token_type), Some(uniq)) => Ok(UsernameTypeRoleUniq {
+            username: username.to_string(),
+            token_type: token_type.to_string(),
+            role: role.to_string(),
+            uniq: uniq.to_string(),
+        }),
         _ => Err(AuthError::BadRequest {
             mime: mime::APPLICATION_JSON,
             body: String::from("Expected exactly 4 ::-separated parts."),

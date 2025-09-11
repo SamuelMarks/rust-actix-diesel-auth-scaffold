@@ -126,18 +126,29 @@ const VALID_HTTP_CODES: [u16; 57] /*std::collections::HashSet<u16>*/ = [
 impl actix_web::ResponseError for AuthError {
     fn status_code(&self) -> actix_web::http::StatusCode {
         let _status_code: u16 = {
-            if let AuthError::ExitCode(exit_code) = self {
-                if exit_code == &std::process::ExitCode::SUCCESS {
-                    200u16
-                } else {
-                    500u16
+            match self {
+                AuthError::ExitCode(exit_code) => {
+                    if exit_code == &std::process::ExitCode::SUCCESS {
+                        200u16
+                    } else {
+                        500u16
+                    }
                 }
-            } else {
-                let code = self.discriminant();
-                if VALID_HTTP_CODES.contains(&code) {
-                    code
-                } else {
-                    500u16
+                AuthError::DieselError { error: e } => {
+                    let display_s = format!("{}", e);
+                    if display_s.find("not found").is_some() {
+                        404u16
+                    } else {
+                        500
+                    }
+                }
+                _ => {
+                    let code = self.discriminant();
+                    if VALID_HTTP_CODES.contains(&code) {
+                        code
+                    } else {
+                        500u16
+                    }
                 }
             }
         };
