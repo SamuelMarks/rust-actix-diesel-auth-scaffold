@@ -5,10 +5,12 @@ rust-actix-diesel-auth-scaffold
 
 Simple baseline scaffold to get you started using actix + diesel with a custom OAuth2 implementation.
 
-For example runnable server, see repository: https://github.com/SamuelMarks/serve-actix-diesel-auth-scaffold
+For an example runnable server, see repository: https://github.com/SamuelMarks/serve-actix-diesel-auth-scaffold
 
-For example repo that builds a domain-specific REST API + models depending on this, see
-repository: https://github.com/crawlcomply/crawlcomply-backend
+For example repositories that builds a domain-specific REST API + models depending on this, see:
+
+- https://github.com/crawlcomply/crawlcomply-backend
+- …
 
 ## OAuth2 supported flows
 

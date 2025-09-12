@@ -8,6 +8,7 @@ pub type ConnectionType = diesel::pg::PgConnection;
 
 /// Struct representing a row in table `clients`
 #[derive(
+    utoipa::ToSchema,
     Debug,
     Clone,
     serde::Serialize,
@@ -45,7 +46,9 @@ impl Default for Clients {
 }
 
 /// Create Struct for a row in table `clients` for [`Clients`]
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, diesel::Insertable)]
+#[derive(
+    utoipa::ToSchema, Debug, Clone, serde::Serialize, serde::Deserialize, diesel::Insertable,
+)]
 #[diesel(table_name=clients)]
 pub struct CreateClients {
     /// Field representing column `id`
@@ -70,7 +73,15 @@ impl Default for CreateClients {
 }
 
 /// Update Struct for a row in table `clients` for [`Clients`]
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, diesel::AsChangeset, PartialEq)]
+#[derive(
+    utoipa::ToSchema,
+    Debug,
+    Clone,
+    serde::Serialize,
+    serde::Deserialize,
+    diesel::AsChangeset,
+    PartialEq,
+)]
 #[diesel(table_name=clients)]
 pub struct UpdateClients {
     /// Field representing column `client_id`
