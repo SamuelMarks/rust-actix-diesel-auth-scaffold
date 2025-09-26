@@ -76,7 +76,11 @@ fn verify_or_insert_creds_and_get_role(
                 )
                 .is_ok()
             {
-                Ok(user.role)
+                Ok(if user.role.is_empty() {
+                    String::from("regular")
+                } else {
+                    user.role
+                })
             } else {
                 Err(AuthError::Unauthorised("User"))
             }
