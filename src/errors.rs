@@ -3,7 +3,13 @@ use std::string::ToString;
 use actix_web::mime;
 use argon2::password_hash::rand_core;
 
-#[derive(derive_more::Display, derive_more::Error, derive_more::From, Debug)]
+#[derive(Debug, serde::Deserialize, serde::Serialize, utoipa::ToSchema)]
+pub struct AuthErrorSchema {
+    pub error: String,
+    pub error_message: String,
+}
+
+#[derive(Debug, derive_more::Display, derive_more::Error, derive_more::From)]
 #[repr(u16)]
 pub enum AuthError {
     #[error(ignore)]

@@ -2,7 +2,7 @@ use actix_web::{post, HttpResponse, Responder};
 use actix_web_httpauth::extractors::bearer::BearerAuth;
 use redis::Commands;
 
-use crate::errors::AuthError;
+use crate::errors::{AuthError, AuthErrorSchema};
 
 fn t() -> bool {
     true
@@ -17,7 +17,8 @@ struct LogoutParams {
 /// Logout a user (uses provided Bearer token from Header)
 #[utoipa::path(
     responses(
-        (status = 200, description = ""),
+        (status = 200, description = "Empty response"),
+        (status = 500, description = "Error response", body = AuthErrorSchema),
     ),
     security(("password"=[]))
 )]

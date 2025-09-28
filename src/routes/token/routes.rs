@@ -2,7 +2,7 @@ use actix_http::header::Header;
 use actix_web::{mime, post};
 use actix_web_httpauth::headers::authorization::Basic;
 
-use crate::errors::AuthError;
+use crate::errors::{AuthError, AuthErrorSchema};
 use crate::models::token::Token;
 use crate::routes::token::helpers::{
     handle_grant_flow_for_authorization_code, handle_grant_flow_for_password,
@@ -15,10 +15,10 @@ use crate::routes::token::types::TokenRequest;
 /// Implements https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.3
 #[utoipa::path(
     responses(
-        (status = 200, description = "Token created"),
-        (status = 400, description = "Unauthorized User"),
-        (status = 404, description = "Not Found User"),
-        (status = 500, description = "Bad Request")
+        (status = 200, description = "Token created", body=Token),
+        (status = 400, description = "Unauthorized User", body=AuthErrorSchema),
+        (status = 404, description = "Not Found User", body=AuthErrorSchema),
+        (status = 500, description = "Bad Request", body=AuthErrorSchema)
     )
 )]
 #[post("/token")]
